@@ -1,0 +1,102 @@
+/* dashboard.css */
+
+body {
+  font-family: "Poppins", sans-serif;
+  background: linear-gradient(135deg, #EEF2F3, #8E9EAB);
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dashboard-wrapper {
+  width: 95%;
+  max-width: 1200px;
+  padding: 40px 20px;
+}
+
+.dashboard-header {
+  text-align: center;
+  margin-bottom: 35px;
+}
+
+.dashboard-header h1 {
+  color: #2C3E50;
+  font-size: 36px;
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 25px;
+}
+
+.dashboard-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 18px;
+  backdrop-filter: blur(10px);
+  padding: 35px 25px;
+  text-align: center;
+  color: #fff;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+.dashboard-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -50%;
+  width: 200%;
+  height: 100%;
+  background: linear-gradient(120deg, rgba(255,255,255,0.15), rgba(255,255,255,0));
+  transform: skewX(-25deg);
+}
+
+.dashboard-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.3);
+}
+
+.dashboard-card .icon {
+  font-size: 50px;
+  margin-bottom: 15px;
+}
+
+.dashboard-card h2 {
+  font-size: 42px;
+  margin: 0;
+}
+
+.dashboard-card p {
+  font-size: 18px;
+  margin-top: 5px;
+  letter-spacing: 0.5px;
+}
+
+/* Individual color themes */
+.card-customers {
+  background: linear-gradient(135deg, #2E93fA, #4FACFE);
+}
+
+.card-invoices {
+  background: linear-gradient(135deg, #00C49F, #00B894);
+}
+
+.card-transactions {
+  background: linear-gradient(135deg, #FF8042, #FF6F61);
+}
+
+@media (max-width: 600px) {
+  .dashboard-header h1 {
+    font-size: 28px;
+  }
+  .dashboard-card h2 {
+    font-size: 34px;
+  }
+}
