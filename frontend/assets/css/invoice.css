@@ -1,3 +1,103 @@
 .classic{
     background-color: #ffffff;
 }
+
+.invoice-template.classic {
+    padding: 30px;
+    font-family: Arial, sans-serif;
+}
+
+.invoice-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 40px;
+}
+
+.company-logo img {
+    max-height: 100px;
+}
+
+.invoice-info {
+    text-align: right;
+}
+
+.invoice-addresses {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 40px;
+}
+
+.from-address, .to-address {
+    flex: 1;
+    max-width: 300px;
+}
+
+.invoice-items {
+    margin-bottom: 40px;
+}
+
+.invoice-summary {
+    float: right;
+    width: 300px;
+}
+
+.summary-table {
+    width: 100%;
+}
+
+.summary-table td {
+    padding: 5px;
+}
+
+.summary-table td:last-child {
+    text-align: right;
+}
+
+.total-row {
+    font-weight: bold;
+    font-size: 1.2em;
+    border-top: 2px solid #ddd;
+}
+
+.invoice-footer {
+    clear: both;
+    text-align: center;
+    margin-top: 60px;
+    padding-top: 20px;
+    border-top: 1px solid #ddd;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.table th,
+.table td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: left;
+}
+
+.table th {
+    background-color: #f0f0f0;
+}
+
+.actions button {
+    margin-right: 5px;
+}
+@media print {
+    .btn-group, .modal {
+        display: none !important;
+    }
+    
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    .card-body {
+        padding: 0 !important;
+    }
+}

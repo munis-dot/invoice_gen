@@ -5,6 +5,10 @@ $router->add('GET', '/api/customers', function() {
     (new CustomerController())->list();
 });
 
+$router->add('POST', '/api/customers/batch', function() {
+    (new CustomerController())->batchCreate();
+});
+
 $router->add('GET', '/api/customers/show', function() {
     $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
     (new CustomerController())->show($id);

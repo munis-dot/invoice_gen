@@ -1,55 +1,53 @@
 <?php
-require_once __DIR__ . '/../../components/header.php';
-?>
-<div class="container">
-    <div class="row mb-3">
-        <div class="col">
-            <h2>View Product</h2>
-        </div>
-        <div class="col text-end">
-            <a href="list.php" class="btn btn-secondary">Back to List</a>
-            <button id="editProduct" class="btn btn-primary">Edit Product</button>
-        </div>
-    </div>
+require_once __DIR__ . '/../../utils/session.php';
 
-    <div class="card">
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <table class="table table-bordered">
-                        <tr>
-                            <th style="width: 150px;">SKU</th>
-                            <td id="productSku"></td>
-                        </tr>
-                        <tr>
-                            <th>Name</th>
-                            <td id="productName"></td>
-                        </tr>
-                        <tr>
-                            <th>Price</th>
-                            <td id="productPrice"></td>
-                        </tr>
-                        <tr>
-                            <th>Tax Rate</th>
-                            <td id="productTaxRate"></td>
-                        </tr>
-                        <tr>
-                            <th>Stock</th>
-                            <td id="productStock"></td>
-                        </tr>
-                    </table>
-                </div>
-                <div class="col-md-6">
-                    <div class="text-center">
-                        <img id="productImage" src="" alt="Product Image" class="img-fluid img-thumbnail" style="max-width: 300px;">
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+// Get product ID from URL parameter
+$productId = isset($_GET['id']) ? $_GET['id'] : null;
 
-<script type="module" src="/frontend/assets/js/product_view.js"></script>
-<?php
-require_once __DIR__ . '/../../components/footer.php';
+if (!$productId) {
+    echo "Product ID is required";
+    exit;
+}
+
+$config = [
+    'endpoint' => "/invoice_gen/backend/public/api/products/show?id={$productId}",
+    'title' => 'Product Details',
+    'fields' => [
+        'id' => 'Product ID',
+        'sku' => 'SKU',
+        'name' => 'Product Name',
+        'description' => 'Description',
+        'price' => [
+            'label' => 'Price',
+            'format' => 'currency'
+        ],
+        'tax_rate' => [
+            'label' => 'Tax Rate',
+            'format' => 'percentage'
+        ],
+        'stock' => [
+            'label' => 'Stock Level',
+            'format' => 'number'
+        ],
+        'created_at' => [
+            'label' => 'Created Date',
+            'format' => 'date'
+        ]
+    ],
+    'image_field' => 'image_url',
+    'actions' => [
+        [
+            'label' => 'Edit Product',
+            'link' => "?page=products/create&id={$productId}",
+            'class' => 'btn edit'
+        ],
+        [
+            'label' => 'Back to List',
+            'link' => '?page=products/list',
+            'class' => 'btn back'
+        ]
+    ]
+];
+
+include __DIR__ . '/../../components/generic_view.php';
 ?>

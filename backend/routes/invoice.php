@@ -31,3 +31,7 @@ $router->add('DELETE', '/api/invoices', function() {
 $router->add('POST', '/api/invoices/generate', function() {
     (new InvoiceController())->generateInvoice();
 });
+
+$router->add('POST', '/api/invoices/batch', function() {
+    (new InvoiceController())->createBatch();
+});

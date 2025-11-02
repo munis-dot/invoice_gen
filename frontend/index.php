@@ -8,6 +8,7 @@ checkSession();
 <head>
   <meta charset="UTF-8">
   <title>Invoice Generator</title>
+  
   <link rel="stylesheet" href="assets/css/style.css">
   <link rel="stylesheet" href="assets/css/login.css">
   <link rel="stylesheet" href="assets/css/invoice.css">
@@ -34,6 +35,8 @@ checkSession();
 
   <?php include __DIR__ . '/components/footer.php'; ?>
   <script src="assets/js/app.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </body>
 
 </html>

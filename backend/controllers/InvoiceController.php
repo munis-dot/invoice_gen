@@ -12,18 +12,24 @@ class InvoiceController extends Controller {
 
     // POST /api/invoice/generate
     public function generateInvoice() {
-        // Get JSON payload
-        $payload = json_decode(file_get_contents("php://input"), true);
-        if (!$payload || !isset($payload['customerId'], $payload['invoiceNumber'], $payload['date'], $payload['amount'], $payload['paymentMethod'])) {
+        try {
+            // Get JSON payload
+            $payload = json_decode(file_get_contents("php://input"), true);
+            if (!$payload || !isset($payload['customerId'], $payload['invoiceNumber'], $payload['date'], $payload['amount'], $payload['paymentMethod'])) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Invalid payload']);
+                return;
+            }
+
+            // Call service to process invoice
+            $result = $this->service->processInvoice($payload);
+            echo json_encode($result);
+            
+        } catch (Exception $e) {
             http_response_code(400);
-            echo json_encode(['error' => 'Invalid payload']);
+            echo json_encode(['error' => $e->getMessage()]);
             return;
         }
-
-        // Call service to process invoice
-        $result = $this->service->processInvoice($payload);
-
-        echo json_encode($result);
     }
 
     public function index() {
@@ -83,5 +89,50 @@ class InvoiceController extends Controller {
             'page' => (int)$page,
             'limit' => (int)$limit,
         ]);
+    }
+
+    /**
+     * Create multiple invoices at once
+     */
+    public function createBatch(): void
+    {
+        $user = AuthMiddleware::handle(true);
+        $data = $this->input();
+        
+        if (!isset($data) || !is_array($data)) {
+            $this->json([
+                'success' => false,
+                'message' => 'Invalid request format. Expected array of invoices.'
+            ], 400);
+            return;
+        }
+
+        // Add created_by to each invoice
+        foreach ($data as &$invoice) {
+            $invoice['created_by'] = $user['id'];
+        }
+
+        try {
+            $result = Invoice::createAll($data);
+            
+            if ($result['success']) {
+                $this->json([
+                    'success' => true,
+                    'message' => $result['message'],
+                    'data' => $result
+                ]);
+            } else {
+                $this->json([
+                    'success' => false,
+                    'message' => $result['message'],
+                    'data' => $result
+                ], 400);
+            }
+        } catch (Exception $e) {
+            $this->json([
+                'success' => false,
+                'message' => 'Failed to process batch invoice creation: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

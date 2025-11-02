@@ -41,7 +41,7 @@ function apiRequest(string $url, string $method = 'GET', array $data = []): ?arr
 
     $finalUrl = apiUrl($url);
     $method = strtoupper($method);
-
+    // echo $finalUrl;
     $headers = [
         'Content-Type: application/json',
         'Authorization: Bearer ' . (getJwtToken() ?? ''),
@@ -73,17 +73,18 @@ function apiRequest(string $url, string $method = 'GET', array $data = []): ?arr
             }
         }
     }
+    // echo $response;
+
     if ($response === false) {
         return ['error' => 'Network error occurred. Please try again.'];
     }
     if ($httpCode >= 400) {
-        return ['error' => "API responded with HTTP $httpCode"];
+        return ['error' => "API responded with HTTP $httpCode, $response"];
     }
-    // echo $response;
     $decoded = json_decode($response, true);
     if (json_last_error() !== JSON_ERROR_NONE) {
         error_log("Invalid JSON response: $response");
-        return ['error' => 'Invalid response from server'];
+        return ['error' => "Invalid JSON response: $response"];
     }
 
     return $decoded;
