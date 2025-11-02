@@ -47,4 +47,5 @@ $config = [
 ];
 
 include __DIR__ . '/../../components/generic_view.php';
+include __DIR__ . '/../transactions/transaction_list.php';
 ?>

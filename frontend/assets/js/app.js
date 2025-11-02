@@ -36,6 +36,7 @@ async function initializePage(page) {
   const pageScripts = {
     'customers/customer_list': 'assets/js/customer_list.js',
     'customers/customer_add': 'assets/js/customer_add.js',
+    'customers/customer_view': 'assets/js/customer_invoice_list.js',
     'products/list': 'assets/js/product_list.js',
     'products/create': 'assets/js/product_form.js',
     'transactions/transaction_list': 'assets/js/transaction_list.js',
@@ -67,6 +68,13 @@ async function initializePage(page) {
     }
   }
 
+}
+
+const getUrlParameter = (name) => {
+  name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+  const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+  const results = regex.exec(window.location.search);
+  return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
 }
 
 // Handle navigation clicks

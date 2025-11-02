@@ -2,15 +2,15 @@
 require_once __DIR__ . '/../../utils/session.php';
 
 // Get customer ID from URL parameter
-$customerId = isset($_GET['id']) ? $_GET['id'] : null;
+$invoiceId = isset($_GET['id']) ? $_GET['id'] : null;
 
-if (!$customerId) {
+if (!$invoiceId) {
     echo "Customer ID is required";
     exit;
 }
 
 $config = [
-    'endpoint' => "/invoice_gen/backend/public/api/invoices/show?id={$customerId}",
+    'endpoint' => "/invoice_gen/backend/public/api/invoices/show?id={$invoiceId}",
     'title' => 'Invoice Details',
     'fields' => [
         'id' => 'Invoice ID',

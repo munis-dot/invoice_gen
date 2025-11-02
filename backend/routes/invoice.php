@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../controllers/InvoiceController.php';
 
 $router->add('GET', '/api/invoices', function() {
-    (new InvoiceController())->index();
+    (new InvoiceController())->list();
 });
 
 $router->add('GET', '/api/invoices/show', function() {

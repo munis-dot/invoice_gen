@@ -277,6 +277,57 @@ class Invoice
         return (int) $stmt->fetchColumn();
     }
 
+    public static function getPaginatedAndFilteredByCustomer(string $search = '', int $limit = 10, int $offset = 0, string $cid = ''): array
+    {
+        $limit = max(1, (int) $limit);
+        $offset = max(0, (int) $offset);
+
+        $db = DB::connect();
+
+        $query = "
+        SELECT 
+            i.*, 
+            c.name AS customer_name, 
+            u.name AS created_by_name
+        FROM invoices i
+        LEFT JOIN customers c ON i.customer_id = c.id
+        LEFT JOIN users u ON i.created_by = u.id
+        WHERE (i.invoice_number LIKE :searchNum
+           OR c.name LIKE :searchName)  and c.id = :customer_id
+        ORDER BY i.id DESC
+        LIMIT $limit OFFSET $offset
+    ";
+
+        $stmt = $db->prepare($query);
+        $stmt->bindValue(':searchNum', '%' . $search . '%', PDO::PARAM_STR);
+        $stmt->bindValue(':customer_id', $cid, PDO::PARAM_INT);
+        $stmt->bindValue(':searchName', '%' . $search . '%', PDO::PARAM_STR);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    public static function getTotalCountByCustomer(string $search = '', string $cid = ''): int
+    {
+        $db = DB::connect();
+
+        $query = "
+        SELECT COUNT(*) 
+        FROM invoices i
+        LEFT JOIN customers c ON i.customer_id = c.id
+        WHERE (i.invoice_number LIKE :search
+           OR c.name LIKE :search2 ) and c.id = :customer_id
+    ";
+
+        $stmt = $db->prepare($query);
+        $stmt->bindValue(':search2', '%' . $search . '%', PDO::PARAM_STR);
+        $stmt->bindValue(':search', '%' . $search . '%', PDO::PARAM_STR);
+        $stmt->bindValue(':customer_id', $cid, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return (int) $stmt->fetchColumn();
+    }
+
     /**
      * Create multiple invoices at once
      * @param array $invoices Array of invoice data with their items
