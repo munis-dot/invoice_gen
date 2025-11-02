@@ -1,13 +1,19 @@
 import { ListHandler } from './list_handler.js';
 
-// Initialize product list handler
-new ListHandler({
-    tableId: 'productTable',
-    searchInputId: 'productSearch',
-    paginationContainerId: 'productPagination',
-    apiEndpoint: '/invoice_gen/backend/public/api/products',
-    itemsPerPage: 10,
-    columns: [
+export default class ProductList {
+    constructor() {
+        this.init();
+    }
+
+    init() {
+        // Initialize product list handler
+        this.listHandler = new ListHandler({
+            tableId: 'productTable',
+            searchInputId: 'productSearch',
+            paginationContainerId: 'productPagination',
+            apiEndpoint: '/invoice_gen/backend/public/api/products',
+            itemsPerPage: 10,
+            columns: [
         { field: 'id', title: 'ID' },
         { 
             field: 'image_url', 
@@ -41,34 +47,46 @@ new ListHandler({
             title: 'Actions',
             render: (_, item) => `
                 <div class="btn-group">
-                    <a href="view.php?id=${item.id}" class="btn btn-info btn-sm">View</a>
-                    <a href="create.php?id=${item.id}" class="btn btn-primary btn-sm">Edit</a>
+                    <button onclick="loadPage('products/view', { id: ${item.id} })" class="btn btn-info btn-sm">View</button>
+                    <button onclick="loadPage('products/create', { id: ${item.id} })" class="btn btn-primary btn-sm">Edit</button>
                     <button class="btn btn-danger btn-sm" onclick="deleteProduct(${item.id})">Delete</button>
                 </div>
             `
         }
     ]
-});
-
-// Delete product function
-window.deleteProduct = async function(id) {
-    if (!confirm('Are you sure you want to delete this product?')) {
-        return;
-    }
-    
-    try {
-        const response = await fetch(`/api/products/${id}`, {
-            method: 'DELETE'
         });
         
-        if (response.ok) {
-            // Refresh the list
-            window.location.reload();
-        } else {
-            const error = await response.json();
-            alert(error.message || 'Failed to delete product');
-        }
-    } catch (err) {
-        alert('Error deleting product: ' + err.message);
+        // Set up delete product handler
+        window.deleteProduct = this.deleteProduct.bind(this);
     }
-};
+
+    async deleteProduct(id) {
+        if (!confirm('Are you sure you want to delete this product?')) {
+            return;
+        }
+        
+        try {
+            const payload = {
+                url: `/invoice_gen/backend/public/api/products?id=${id}`,
+                method: 'DELETE',
+                data: null
+            };
+
+            const response = await fetch('utils/api_proxy.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            const result = await response.json();
+            if (result && !result.error) {
+                // Refresh the list using the list handler instead of page reload
+                this.listHandler.loadData();
+            } else {
+                alert(result.error || 'Failed to delete product');
+            }
+        } catch (err) {
+            alert('Error deleting product: ' + err.message);
+        }
+    }
+}

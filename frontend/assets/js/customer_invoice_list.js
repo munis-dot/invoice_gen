@@ -11,7 +11,7 @@ export default class TransactionList {
             tableId: 'transactionTable',
             searchInputId: 'transactionSearch',
             paginationContainerId: 'transactionPagination',
-            apiEndpoint: '/invoice_gen/backend/public/api/invoices',
+            apiEndpoint: '/invoice_gen/backend/public/api/invoices/customer?customerId=' + getUrlParameter('id'),
             itemsPerPage: 10,
             columns: [
                 { field: 'id', title: 'ID' },
@@ -45,44 +45,12 @@ export default class TransactionList {
                     render: (_, item) => `
                         <div class="btn-group">
                             <button data-link="transactions/transaction_view?id=${item.id}" class="btn btn-info btn-sm">View</button>
-                            <button class="btn btn-danger btn-sm" onclick="deleteTransaction(${item.id})">Delete</button>
                         </div>
                     `
                 }
             ]
         });
 
-        // Set up delete transaction handler
-        window.deleteTransaction = this.deleteTransaction.bind(this);
     }
 
-    async deleteTransaction(id) {
-        if (!confirm('Are you sure you want to delete this invoice?')) {
-            return;
-        }
-        
-        try {
-            const payload = {
-                url: `/invoice_gen/backend/public/api/invoices?id=${id}`,
-                method: 'DELETE',
-                data: null
-            };
-
-            const response = await fetch('utils/api_proxy.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            
-            const result = await response.json();
-            if (result && !result.error) {
-                // Refresh the list using the list handler
-                this.listHandler.loadData();
-            } else {
-                alert(result.error || 'Failed to delete invoice');
-            }
-        } catch (err) {
-            alert('Error deleting invoice: ' + err.message);
-        }
-    }
 }

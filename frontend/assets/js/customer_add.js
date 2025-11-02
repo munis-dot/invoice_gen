@@ -3,14 +3,15 @@ import { initializeFormHandler } from '../../assets/js/form_handler.js';
 
 initializeFormHandler({
     formId: 'customerForm',
-    uploadFormId: 'uploadForm',
+    uploadFormId: 'customerBulkUploadForm',
     resultDivId: 'addCustomerResult',
-    processorUrl: '/frontend/modules/customers/customer_processor.php',
     apiEndpoint: '/invoice_gen/backend/public/api/customers',
-    onSuccess: function(data) {
+    apiEndpointBulk: '/invoice_gen/backend/public/api/customers/batch',
+    onSuccess: function(data, message) {
         if (data.success!=true) {
             throw new Error(data.error);
         }
-        alert('Customer added successfully!');
+        alert(message);
+        loadPage('customers/customer_list');
     }
 });

@@ -35,6 +35,42 @@ class CustomerController extends Controller {
         $this->json(['success' => $ok]);
     }
 
+    /**
+     * Batch create multiple customers
+     */
+    public function batchCreate(): void {
+        AuthMiddleware::handle(true); // admin only
+        
+        $data = $this->input();
+        if (!isset($data) || !is_array($data)) {
+            $this->json(['error' => 'Invalid input format. Expected array of items.'], 400);
+            return;
+        }
+
+        $result = Customer::createAll($data);
+        
+        if ($result['success']) {
+            $this->json([
+                'message' => 'Customers created successfully',
+                'summary' => [
+                    'total' => $result['total'],
+                    'successful' => $result['successful'],
+                    'failed' => $result['failed']
+                ]
+            ], 201);
+        } else {
+            $this->json([
+                'error' => 'Failed to create some or all customers',
+                'summary' => [
+                    'total' => $result['total'],
+                    'successful' => $result['successful'],
+                    'failed' => $result['failed']
+                ],
+                'errors' => $result['errors']
+            ], 500);
+        }
+    }
+
      public function list()
     {
         AuthMiddleware::handle();

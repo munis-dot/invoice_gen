@@ -17,6 +17,14 @@ export class ListHandler {
         this.searchTerm = '';
         this.searchTimeout = null;
         
+        // Bind methods to maintain context
+        this.loadData = this.loadData.bind(this);
+        this.renderData = this.renderData.bind(this);
+        this.renderPagination = this.renderPagination.bind(this);
+        this.goToPage = this.goToPage.bind(this);
+        this.handleSearch = this.handleSearch.bind(this);
+        this.handlePaginationClick = this.handlePaginationClick.bind(this);
+        
         this.init();
     }
 
@@ -108,8 +116,7 @@ async loadData() {
         let html = '<div class="pagination">';
         
         // Previous button
-        html += `<button class="btn btn-sm ${this.currentPage === 1 ? 'disabled' : ''}" 
-                        onclick="this.goToPage(${this.currentPage - 1})" 
+        html += `<button class="btn btn-sm page-nav" data-page="${this.currentPage - 1}" 
                         ${this.currentPage === 1 ? 'disabled' : ''}>
                     Previous
                 </button>`;
@@ -117,16 +124,15 @@ async loadData() {
         // Page numbers
         for (let i = 1; i <= totalPages; i++) {
             if (i === 1 || i === totalPages || (i >= this.currentPage - 2 && i <= this.currentPage + 2)) {
-                html += `<button class="btn btn-sm ${i === this.currentPage ? 'active' : ''}" 
-                                onclick="this.goToPage(${i})">${i}</button>`;
+                html += `<button class="btn btn-sm page-number ${i === this.currentPage ? 'active' : ''}" 
+                                data-page="${i}">${i}</button>`;
             } else if (i === this.currentPage - 3 || i === this.currentPage + 3) {
                 html += '<span>...</span>';
             }
         }
 
         // Next button
-        html += `<button class="btn btn-sm ${this.currentPage === totalPages ? 'disabled' : ''}" 
-                        onclick="this.goToPage(${this.currentPage + 1})"
+        html += `<button class="btn btn-sm page-nav" data-page="${this.currentPage + 1}"
                         ${this.currentPage === totalPages ? 'disabled' : ''}>
                     Next
                 </button>`;
@@ -138,6 +144,10 @@ async loadData() {
         html += '</div>';
         
         this.paginationContainer.innerHTML = html;
+        
+        // Add event delegation for pagination
+        this.paginationContainer.removeEventListener('click', this.handlePaginationClick);
+        this.paginationContainer.addEventListener('click', this.handlePaginationClick);
     }
 
     goToPage(page) {
@@ -167,5 +177,15 @@ async loadData() {
                 </td>
             </tr>
         `;
+    }
+
+    handlePaginationClick(event) {
+        const button = event.target.closest('button');
+        if (!button || button.disabled) return;
+        
+        const page = parseInt(button.dataset.page);
+        if (!isNaN(page)) {
+            this.goToPage(page);
+        }
     }
 }

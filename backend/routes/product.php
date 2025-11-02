@@ -23,3 +23,7 @@ $router->add('DELETE', '/api/products', function() {
     $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
     (new ProductController())->destroy($id);
 });
+
+$router->add('POST', '/api/products/batch', function() {
+    (new ProductController())->batchCreate();
+});

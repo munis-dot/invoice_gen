@@ -1,36 +1,51 @@
 <?php
-require_once __DIR__ . '/api_client.php';
-$id = $_GET['id'] ?? null;
-if (!$id) { die('Customer ID missing'); }
+require_once __DIR__ . '/../../utils/session.php';
 
-$customer = apiRequest("backend/public/api/customers/$id", 'GET');
+// Get customer ID from URL parameter
+$customerId = isset($_GET['id']) ? $_GET['id'] : null;
+
+if (!$customerId) {
+    echo "Customer ID is required";
+    exit;
+}
+
+$config = [
+    'endpoint' => "/invoice_gen/backend/public/api/customers/show?id={$customerId}",
+    'title' => 'Customer Details',
+    'fields' => [
+        'id' => 'Customer ID',
+        'name' => 'Customer Name',
+        'email' => [
+            'label' => 'Email',
+            'format' => 'email'
+        ],
+        'phone' => 'Phone Number',
+        'address' => [
+            'label' => 'Address',
+            'format' => 'text'
+        ],
+        'created_at' => [
+            'label' => 'Created Date',
+            'format' => 'date'
+        ]
+    ],
+    'image_field' => '',
+    'actions' => [
+        [
+            'label' => 'Edit Customer',
+            'link' => "?page=customers/customer_add&id={$customerId}",
+            'class' => 'btn edit',
+            'icon' => 'edit'
+        ],
+        [
+            'label' => 'Back to List',
+            'link' => '?page=customers/customer_list',
+            'class' => 'btn back',
+            'icon' => 'arrow-left'
+        ]
+    ]
+];
+
+include __DIR__ . '/../../components/generic_view.php';
+include __DIR__ . '/../transactions/transaction_list.php';
 ?>
-<div class="container">
-  <h2>Customer Details</h2>
-
-  <?php if (!empty($customer) && empty($customer['error'])): ?>
-    <form id="updateForm">
-      <input type="hidden" name="id" value="<?= $customer['id'] ?>">
-      <div class="form-group">
-        <label>Name</label>
-        <input type="text" name="name" value="<?= htmlspecialchars($customer['name']) ?>">
-      </div>
-      <div class="form-group">
-        <label>Email</label>
-        <input type="email" name="email" value="<?= htmlspecialchars($customer['email']) ?>">
-      </div>
-      <div class="form-group">
-        <label>Phone</label>
-        <input type="text" name="phone" value="<?= htmlspecialchars($customer['phone']) ?>">
-      </div>
-      <div class="form-group">
-        <label>Address</label>
-        <textarea name="address"><?= htmlspecialchars($customer['address']) ?></textarea>
-      </div>
-      <button type="submit">Update</button>
-      <button type="button" id="back-to-list">Back</button>
-    </form>
-  <?php else: ?>
-    <p>Error: <?= $customer['error'] ?? 'Not found' ?></p>
-  <?php endif; ?>
-</div>

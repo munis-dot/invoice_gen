@@ -67,4 +67,42 @@ class ProductController extends Controller {
             'limit' => (int)$limit,
         ]);
     }
+
+    /**
+     * Batch create multiple products
+     */
+    public function batchCreate(): void
+    {
+        AuthMiddleware::handle(true); // admin only
+        
+        $data = $this->input();
+        echo json_encode($data);
+        if (!isset($data) || !is_array($data)) {
+            $this->json(['error' => 'Invalid input format. Expected array of items.'], 400);
+            return;
+        }
+
+        $result = Product::createAll($data);
+        
+        if ($result['success']) {
+            $this->json([
+                'message' => 'Products created successfully',
+                'summary' => [
+                    'total' => $result['total'],
+                    'successful' => $result['successful'],
+                    'failed' => $result['failed']
+                ]
+            ], 201);
+        } else {
+            $this->json([
+                'error' => 'Failed to create some or all products',
+                'summary' => [
+                    'total' => $result['total'],
+                    'successful' => $result['successful'],
+                    'failed' => $result['failed']
+                ],
+                'errors' => $result['errors']
+            ], 500);
+        }
+    }
 }

@@ -12,11 +12,18 @@ if (isset($invoice_data['error'])) {
     echo '<div class="alert alert-danger">Error loading invoice: ' . htmlspecialchars($invoice_data['error']) . '</div>';
     exit;
 }
+$email = htmlspecialchars($invoice['customer']['email']);
+$invoice_number = htmlspecialchars($invoice['invoice_number']);
 ?>
+<div>
+    <button onclick="downloadElementAsPDF('invoice-<?php echo date('Y-m-d'); ?>.pdf')">Download PDF</button>
+    <button onclick="emailElementAsPDF('<?php echo $email; ?>', 'Invoice #<?php echo $invoice_number; ?>')">Email PDF</button>
+    <button onclick="printElement()">Print</button>
+</div>
 <div class="invoice-template classic">
     <div class="invoice-header">
             <div class="company-logo">
-                <img src="<?php echo htmlspecialchars("https://stellar-signs.com/wp-content/uploads/2021/08/Depositphotos_13687440_s-2019.jpg"); ?>" alt="Company Logo">
+                <img src="<?php echo htmlspecialchars("assets/img/Depositphotos_13687440_s-2019.jpg"); ?>" alt="Company Logo">
             </div>
         <div class="invoice-info">
             <h2>INVOICE</h2>
@@ -101,84 +108,3 @@ if (isset($invoice_data['error'])) {
     </div>
 </div>
 
-<style>
-.invoice-template.classic {
-    padding: 30px;
-    font-family: Arial, sans-serif;
-}
-
-.invoice-header {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 40px;
-}
-
-.company-logo img {
-    max-height: 100px;
-}
-
-.invoice-info {
-    text-align: right;
-}
-
-.invoice-addresses {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 40px;
-}
-
-.from-address, .to-address {
-    flex: 1;
-    max-width: 300px;
-}
-
-.invoice-items {
-    margin-bottom: 40px;
-}
-
-.invoice-summary {
-    float: right;
-    width: 300px;
-}
-
-.summary-table {
-    width: 100%;
-}
-
-.summary-table td {
-    padding: 5px;
-}
-
-.summary-table td:last-child {
-    text-align: right;
-}
-
-.total-row {
-    font-weight: bold;
-    font-size: 1.2em;
-    border-top: 2px solid #ddd;
-}
-
-.invoice-footer {
-    clear: both;
-    text-align: center;
-    margin-top: 60px;
-    padding-top: 20px;
-    border-top: 1px solid #ddd;
-}
-
-@media print {
-    .btn-group, .modal {
-        display: none !important;
-    }
-    
-    .card {
-        border: none !important;
-        box-shadow: none !important;
-    }
-    
-    .card-body {
-        padding: 0 !important;
-    }
-}
-</style>

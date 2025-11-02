@@ -1,0 +1,162 @@
+/* ===== RESET ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ===== FULLSCREEN BACKGROUND ===== */
+body {
+  font-family: "Poppins", sans-serif;
+  background: linear-gradient(120deg, #4a00e0, #8e2de2);
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ===== CONTAINER ===== */
+.fullscreen-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(8px);
+}
+
+/* ===== CARD STYLE ===== */
+.content-card {
+  display: flex;
+  flex-direction: row;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  width: 90%;
+  max-width: 1200px;
+  height: 80%;
+  color: #fff;
+  animation: fadeIn 0.8s ease-in-out;
+}
+
+/* ===== LEFT IMAGE PANEL ===== */
+.left-panel {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.left-panel img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.placeholder {
+  font-size: 1.2rem;
+  opacity: 0.7;
+}
+
+/* ===== RIGHT CONTENT PANEL ===== */
+.right-panel {
+  flex: 1.2;
+  padding: 50px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.title {
+  font-size: 2rem;
+  margin-bottom: 30px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-weight: 600;
+  color: #fff;
+}
+
+/* ===== INFO LIST ===== */
+.info-list {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+.label {
+  font-weight: 600;
+  color: #ffd;
+}
+.value {
+  font-weight: 400;
+  color: #e0e0e0;
+}
+
+/* ===== BUTTONS ===== */
+.button-group {
+  display: flex;
+  gap: 15px;
+  margin-top: 20px;
+}
+.btn {
+  text-decoration: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  color: #fff;
+}
+.btn.edit {
+  background: #00c853;
+}
+.btn.delete {
+  background: #e53935;
+}
+.btn.back {
+  background: #0288d1;
+}
+.btn:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* ===== SCROLLBAR ===== */
+.info-list::-webkit-scrollbar {
+  width: 6px;
+}
+.info-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+/* ===== ANIMATION ===== */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 900px) {
+  .content-card {
+    flex-direction: column;
+    height: 90%;
+  }
+  .left-panel {
+    height: 40%;
+  }
+  .right-panel {
+    height: 60%;
+    padding: 25px;
+  }
+}

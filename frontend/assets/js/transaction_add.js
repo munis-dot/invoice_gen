@@ -2,11 +2,11 @@
 import { initializeFormHandler } from './form_handler.js';
 
 initializeFormHandler({
-    formId: 'transactionAddForm',
-    uploadFormId: 'uploadForm',
+    formId: 'transactionForm',
+    uploadFormId: 'transactionBulkUploadForm',
     resultDivId: 'addTransactionResult',
-    processorUrl: '/invoice_gen/frontend/modules/transactions/transaction_processor.php',
     apiEndpoint: '/invoice_gen/backend/public/api/invoices/generate',
+    apiEndpointBulk: 'invoice_gen/backend/public/api/invoices/batch',
     onSuccess: function(data) {
         if (data.error) {
             throw new Error(data.error);

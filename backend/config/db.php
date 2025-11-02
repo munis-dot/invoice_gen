@@ -30,7 +30,6 @@ class DB {
                     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                     PDO::ATTR_EMULATE_PREPARES => false,
                 ]);
-
                 // Step 4️⃣ Confirm DB is in use
                 self::$instance->query("USE `{$DB_NAME}`");
 

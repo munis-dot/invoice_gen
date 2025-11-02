@@ -13,8 +13,15 @@ class InvoiceService
 
     public function processInvoice(array $payload)
     {
-
         $customerId = $payload['customerId'];
+        
+        // Validate if customer exists
+        require_once __DIR__ . '/../models/Customer.php';
+        $customer = Customer::find($customerId);
+        if (!$customer) {
+            throw new Exception("Customer not found with ID: $customerId");
+        }
+
         $date = $payload['date'];
         $invoiceNumber = $payload['invoiceNumber'];
         $targetAmount = (float) $payload['amount'];

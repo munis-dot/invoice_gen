@@ -37,8 +37,3 @@ require_once __DIR__ . '/../../components/header.php';
         <!-- Pagination will be injected by JS -->
     </div>
 </div>
-
-<script type="module" src="/frontend/assets/js/product_list.js"></script>
-<?php
-require_once __DIR__ . '/../../components/footer.php';
-?>
