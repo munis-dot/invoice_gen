@@ -84,4 +84,9 @@ class InvoiceController extends Controller {
             'limit' => (int)$limit,
         ]);
     }
+    public function getByCustomerId(int $customerId): void {
+        AuthMiddleware::handle(true);
+        $invoices = Invoice::getByCustomerId($customerId);
+        $this->json($invoices ?? ['error' => 'Invoices not found'], $invoices ? 200 : 404);
+    }
 }
