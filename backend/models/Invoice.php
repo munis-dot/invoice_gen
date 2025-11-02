@@ -387,6 +387,15 @@ class Invoice
         }
     }
 
+//get by customer id
+public static function getByCustomerId(int $customerId): array
+{
+    $db = DB::connect();
+    $stmt = $db->prepare("SELECT * FROM invoices WHERE customer_id = :customerId");
+    $stmt->execute([':customerId' => $customerId]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+}
+
 }
 
 
