@@ -6,41 +6,48 @@ require 'PHPMailer/src/Exception.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-class MailService{
-//put all funtianllit inside function and get sender mail, subject,body from input and return success or error
-function sendEmail($senderMail, $subject, $body) {
-$config = parse_ini_file('../config.ini', true);
+class MailService {
 
-//get from env file
-$mailUsername = $config['SMTP']['user'];
-$mailPassword = $config['SMTP']['pass'];
-$mail = new PHPMailer(true);
-try {
-    // Server settings
-    $mail->isSMTP();                                     
-    $mail->Host       = 'smtp.gmail.com';     // SMTP server
-    $mail->SMTPAuth   = true;                                
-    $mail->Username   = $mailUsername; // SMTP username
-    $mail->Password   = $mailPassword;   // Use App Password if Gmail
-    $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; // Encryption (TLS)
-    $mail->Port       = 587;                              
-    echo "user name". $mailUsername;
-    echo "Password : ". $mailPassword;
-    // Recipients
-    $mail->setFrom($mailUsername, 'INOVICE GENERATOR');
-    $mail->addAddress($senderMail, 'Recipient');  
+    public function sendEmail($senderMail, $subject, $body, $file = null) {
+        $config = parse_ini_file('../config.ini', true);
 
-    // Content
-    $mail->isHTML(true);
-    $mail->Subject = $subject;
-    $mail->Body    = '<h3>'.$body.'</h3>';
-    $mail->AltBody = 'This is a plain text version of the email body.';
+        $mailUsername = $config['SMTP']['user'];
+        $mailPassword = $config['SMTP']['pass'];
 
-    $mail->send();
-    echo '✅ Message sent successfully!';
-} catch (Exception $e) {
-    echo "❌ Message could not be sent. Mailer Error: {$mail->ErrorInfo}";
-}
+        $mail = new PHPMailer(true);
 
-}
+        try {
+            // SMTP Config
+            $mail->isSMTP();
+            $mail->Host       = 'smtp.gmail.com';
+            $mail->SMTPAuth   = true;
+            $mail->Username   = $mailUsername;
+            $mail->Password   = $mailPassword;
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port       = 587;
+
+            // Recipients
+            $mail->setFrom($mailUsername, 'INVOICE GENERATOR');
+            $mail->addAddress($senderMail);
+
+            // Optional file stream attachment
+            if ($file && isset($file['tmp_name']) && is_uploaded_file($file['tmp_name'])) {
+                $mail->addAttachment(
+                    $file['tmp_name'],
+                    $file['name'] ?? 'attachment'
+                );
+            }
+
+            // Mail content
+            $mail->isHTML(true);
+            $mail->Subject = $subject;
+            $mail->Body    = "<h3>{$body}</h3>";
+            $mail->AltBody = strip_tags($body);
+
+            $mail->send();
+            return ['status' => 'success', 'message' => 'Mail sent successfully'];
+        } catch (Exception $e) {
+            return ['status' => 'error', 'message' => $mail->ErrorInfo];
+        }
+    }
 }
