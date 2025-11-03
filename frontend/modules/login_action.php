@@ -19,7 +19,7 @@ if (empty($email) || empty($password)) {
 }
 
 // Use relative API path; apiRequest will build the full URL with apiUrl()
-$response = apiRequest('http://192.168.29.225/invoice_gen/backend/public/api/login', 'POST', ['email' => $email, 'password' => $password]);
+$response = apiRequest('http://localhost/invoice_gen/backend/public/api/login', 'POST', ['email' => $email, 'password' => $password]);
 
 if (is_array($response) && !empty($response['success'])) {
     // Successful login

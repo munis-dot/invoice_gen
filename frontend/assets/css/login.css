@@ -1,63 +1,173 @@
-/* login.css */
+/* 🌈 LOGIN PAGE - Advanced Animated UI */
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
 
 body {
-  font-family: "Segoe UI", Arial, sans-serif;
-  background: linear-gradient(135deg, #74ABE2, #5563DE);
+  font-family: "Poppins", sans-serif;
+  background: linear-gradient(135deg, #e59be7, #c0cee6);
+  overflow: hidden;
+  margin: 0;
+  height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100vh;
-  margin: 0;
+  background-size: 300% 300%;
+  animation: gradientShift 12s ease infinite;
 }
 
+/* 🌊 Animated gradient background motion */
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* 💠 Floating Shape (Blob) Decorations */
+.shape {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.4;
+  filter: blur(40px);
+  animation: floatShape 10s ease-in-out infinite alternate;
+  z-index: 0;
+}
+
+.shape1 {
+  background: #ff5f6d;
+  width: 200px;
+  height: 200px;
+  top: 5%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.shape2 {
+  background: #ffc371;
+  width: 300px;
+  height: 300px;
+  bottom: 10%;
+  right: 15%;
+  animation-delay: 3s;
+}
+
+.shape3 {
+  background: #4facfe;
+  width: 180px;
+  height: 180px;
+  top: 70%;
+  left: 20%;
+  animation-delay: 6s;
+}
+
+/* 🪶 Floating animation */
+@keyframes floatShape {
+  0% { transform: translateY(0) rotate(0deg); }
+  100% { transform: translateY(-40px) rotate(20deg); }
+}
+
+/* 🪄 Login Container */
 .login-container {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 5px 25px rgba(0,0,0,0.15);
-  padding: 40px 35px;
-  width: 100%;
-  max-width: 360px;
+  position: relative;
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(15px);
+  border-radius: 16px;
+  padding: 45px 40px;
+  width: 90%;
+  max-width: 400px;
   text-align: center;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
+  color: #0c0c0c;
+  animation: fadeInUp 1.2s ease forwards;
+  transform: translateY(50px);
+  opacity: 0;
 }
 
+/* 🕊️ Fade-in entrance */
+@keyframes fadeInUp {
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* 🧿 Login Icon */
+.login-icon {
+  font-size: 85px;
+  color: #0072ff;
+  margin-bottom: 5px;  /* ✅ slightly reduced gap */
+  text-shadow: 0 3px 10px rgba(0, 114, 255, 0.4);
+}
+
+/* 🧱 Heading */
 .login-container h3 {
+  font-size: 1.7em;
+  font-weight: 600;
+  margin-top: 5px;   /* ✅ small upward adjustment */
   margin-bottom: 20px;
-  color: #333;
+  letter-spacing: 0.5px;
+  color: #0a0a0a;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
+/* ✏️ Inputs */
 .login-container input {
-  width:  calc(100% - 24px);
-  padding: 10px 12px;
-  margin: 8px 0;
-  border: 1px solid #ccc;
+  width: 100%;
+  padding: 12px 14px;
+  margin: 10px 0;
   border-radius: 8px;
+  border: none;
+  background: rgba(255, 255, 255, 0.85);
   font-size: 15px;
+  color: #333;
+  transition: all 0.3s ease;
 }
 
 .login-container input:focus {
-  border-color: #5563DE;
   outline: none;
+  box-shadow: 0 0 10px #4facfe;
+  transform: scale(1.03);
 }
 
+/* 🚀 Button */
 .login-container button {
-  background: #2587b1;
-  color: white;
+  background: linear-gradient(135deg, #00c6ff, #0072ff);
+  color: #fff;
   border: none;
   border-radius: 8px;
-  padding: 10px 15px;
-  font-size: 15px;
+  padding: 12px 15px;
+  font-size: 16px;
   width: 100%;
   cursor: pointer;
-  margin-top: 10px;
-  transition: background 0.3s ease;
+  margin-top: 15px;
+  font-weight: 600;
+  transition: all 0.3s ease;
 }
 
 .login-container button:hover {
-  background: #3C4BC4;
+  background: linear-gradient(135deg, #0072ff, #00c6ff);
+  transform: scale(1.05);
+  box-shadow: 0 5px 15px rgba(0, 114, 255, 0.5);
 }
 
+/* ⚠️ Error / Info Text */
 .login-container p {
-  margin-top: 10px;
-  color: red;
+  margin-top: 12px;
+  color: #ffb6b9;
   font-size: 14px;
+}
+
+/* 📱 Responsive Design */
+@media (max-width: 600px) {
+  .login-container {
+    padding: 35px 25px;
+  }
+  .login-container h3 {
+    font-size: 1.4em;
+  }
+  .login-icon {
+    font-size: 55px;
+    margin-bottom: 5px; /* ✅ balanced for small screens */
+  }
 }
