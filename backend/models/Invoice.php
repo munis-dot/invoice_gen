@@ -103,7 +103,7 @@ class Invoice
         $stmt = $pdo->prepare("
         SELECT 
             i.id AS invoice_id, i.invoice_number, i.date, i.subtotal, i.discount, i.tax, i.total, 
-            i.created_at, i.created_by,
+            i.created_at, i.created_by,i.company_logo,i.email,i.address
             
             c.id AS customer_id, c.name AS customer_name, c.phone AS customer_phone, 
             c.email AS customer_email, c.address AS customer_address,
@@ -141,6 +141,9 @@ class Invoice
             'created_at' => $first['created_at'],
             'created_by' => $first['created_by'],
             'created_by_name' => $first['created_by_name'],
+            'company_logo' => $first['company_logo'],
+            'email' => $first['email'],
+            'address' => $first['address'],
             'customer' => [
                 'id' => $first['customer_id'],
                 'name' => $first['customer_name'],
@@ -186,8 +189,8 @@ class Invoice
     public function createInvoice(array $data)
     {
         $stmt = $this->pdo->prepare("
-            INSERT INTO invoices (invoice_number, customer_id, date, subtotal, discount, tax, total, created_by, pdf_path)
-            VALUES (:invoice_number, :customer_id, :date, :subtotal, :discount, :tax, :total, :created_by, :pdf_path)
+            INSERT INTO invoices (invoice_number, customer_id, date, subtotal, discount, tax, total, created_by, pdf_path, company_logo, email, address)
+            VALUES (:invoice_number, :customer_id, :date, :subtotal, :discount, :tax, :total, :created_by, :pdf_path, :company_logo, :email, :address)
         ");
         $stmt->execute([
             ':invoice_number' => $data['invoice_number'],
@@ -199,6 +202,7 @@ class Invoice
             ':total' => $data['total'],
             ':created_by' => $data['created_by'] ?? null,
             ':pdf_path' => $data['pdf_path'] ?? null
+            
         ]);
         return $this->pdo->lastInsertId();
     }
