@@ -2,38 +2,50 @@
 // UI: Transaction List
 require_once __DIR__ . '/../../components/header.php';
 ?>
-<div class="container">
-    <div class="row mb-3">
-        <div class="col">
-            <h2>Transaction List</h2>
-        </div>
-        <div class="col d-flex justify-content-end align-items-center">
-            <div class="input-group me-3" style="max-width: 300px;">
-                <span class="input-group-text"><i class="fas fa-search"></i></span>
-                <input type="text" id="transactionSearch" class="form-control" placeholder="Search transactions...">
+<link rel="stylesheet" href="/frontend/assets/css/transaction_list.css">
+
+<div class="transaction-container container mt-4">
+    <div class="transaction-header">
+        <h2 class="page-title">
+            <i class="fas fa-receipt"></i> Transaction List
+        </h2>
+
+        <div class="header-actions">
+            <div class="search-box">
+                <div class="input-group">
+                    <span class="input-group-text search-icon">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" id="transactionSearch" class="form-control" placeholder="Search transactions...">
+                </div>
             </div>
-            <button data-link="transactions/transaction_add" class="btn btn-primary">Add Transaction</button>
+
+            <button data-link="transactions/transaction_add" class="btn-modern btn-gradient">
+                <i class="fas fa-plus me-2"></i> Add Transaction
+            </button>
         </div>
     </div>
 
-    <table class="table table-bordered" id="transactionTable">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Invoice Number</th>
-                <th>Customer</th>
-                <th>Date</th>
-                <th>Amount</th>
-                <th>Payment Method</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            <!-- Transaction rows will be injected by JS -->
-        </tbody>
-    </table>
+    <div class="table-responsive">
+        <table class="table table-hover table-bordered" id="transactionTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Invoice Number</th>
+                    <th>Customer</th>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Payment Method</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Transaction rows will be injected by JS -->
+            </tbody>
+        </table>
+    </div>
 
-    <div id="transactionPagination" class="d-flex justify-content-between align-items-center">
+    <div id="transactionPagination" class="pagination-wrapper">
         <!-- Pagination will be injected by JS -->
     </div>
 </div>

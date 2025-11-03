@@ -1,43 +1,103 @@
+/* 🌟 Modern Pagination Styling */
 .pagination {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    margin: 1rem 0;
+    justify-content: center;
+    gap: 0.6rem;
+    margin: 1.5rem 0;
+    font-size: 1.05rem;
+    flex-wrap: wrap;
 }
 
+/* 🔘 Pagination Buttons */
 .pagination button {
-    padding: 0.375rem 0.75rem;
+    padding: 0.6rem 1.2rem;
     border: 1px solid #dee2e6;
-    background-color: #fff;
+    background: linear-gradient(145deg, #ffffff, #f0f0f0);
     color: #0d6efd;
     cursor: pointer;
-    transition: all 0.15s ease-in-out;
+    transition: all 0.25s ease-in-out;
+    font-size: 1rem;
+    border-radius: 10px;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.08);
+    font-weight: 500;
 }
 
+/* ✨ Hover Effect */
 .pagination button:hover:not(.disabled) {
-    background-color: #e9ecef;
-    border-color: #dee2e6;
-    color: #0a58ca;
+    background: linear-gradient(145deg, #e7f0ff, #dce9ff);
+    border-color: #b0c8ff;
+    color: #0043ce;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(13,110,253,0.2);
 }
 
+/* 🔵 Active Button */
 .pagination button.active {
-    background-color: #0d6efd;
+    background: linear-gradient(145deg, #0d6efd, #0056d2);
     border-color: #0d6efd;
     color: #fff;
+    font-weight: 600;
+    box-shadow: 0 4px 10px rgba(13,110,253,0.4);
+    transform: translateY(-2px);
 }
 
+/* 🚫 Disabled Button */
 .pagination button.disabled {
-    color: #6c757d;
+    color: #adb5bd;
     pointer-events: none;
-    background-color: #fff;
+    background: #f8f9fa;
     border-color: #dee2e6;
+    box-shadow: none;
 }
 
+/* ℹ️ Pagination Info */
 .pagination-info {
     margin-left: 1rem;
     color: #6c757d;
+    font-size: 1rem;
+    font-weight: 500;
+    background: #f8f9fa;
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 
-#customerSearch, #transactionSearch {
-    max-width: 300px;
+/* 🔍 Search Inputs */
+#customerSearch,
+#transactionSearch {
+    max-width: 340px;
+    font-size: 1rem;
+    padding: 0.6rem 1rem;
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    transition: all 0.25s ease;
+    background-color: #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+/* 🧭 Search Focus Animation */
+#customerSearch:focus,
+#transactionSearch:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 8px rgba(13,110,253,0.3);
+    outline: none;
+    transform: scale(1.02);
+}
+
+/* 🌈 Smooth Transition for All */
+.pagination button,
+#customerSearch,
+#transactionSearch {
+    transition: all 0.25s ease-in-out;
+}
+
+/* 💎 Optional: Add a subtle fade-in for the whole pagination */
+.pagination {
+    animation: fadeIn 0.6s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }

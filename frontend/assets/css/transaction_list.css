@@ -1,0 +1,186 @@
+/* 🌈 General Page Styling */
+.transaction-container {
+  background: linear-gradient(135deg, #f5f9ff, #eaf2ff);
+  padding: 2.5rem;
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  animation: fadeIn 0.6s ease-in-out;
+  backdrop-filter: blur(10px);
+}
+
+/* 🧾 Header */
+.transaction-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.8rem;
+}
+
+.page-title {
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: #1e2a5e;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.page-title i {
+  color: #007bff;
+}
+
+/* 🔍 Search Box */
+.search-box .input-group {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.search-box input {
+  padding: 0.7rem 1rem;
+  border: 1.5px solid #dee2e6;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+}
+
+.search-box input:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 10px rgba(0, 123, 255, 0.25);
+  transform: scale(1.02);
+}
+
+.search-icon {
+  background: linear-gradient(135deg, #007bff, #5f8fff);
+  color: #fff;
+  border: none;
+}
+
+/* 🌟 Modern Buttons */
+.btn-modern {
+  position: relative;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  overflow: hidden;
+  z-index: 1;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 20px rgba(0, 123, 255, 0.3);
+}
+
+.btn-modern::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #007bff, #5f8fff, #007bff);
+  background-size: 200% 200%;
+  animation: gradientShift 4s ease infinite;
+  z-index: -1;
+}
+
+.btn-modern:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 10px 25px rgba(0, 123, 255, 0.4);
+}
+
+.btn-modern:active {
+  transform: scale(0.97);
+}
+
+/* 💎 Gradient Variant */
+.btn-gradient {
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* 🧾 Table Styling */
+.table {
+  margin-top: 1rem;
+  border-radius: 14px;
+  overflow: hidden;
+  background: white;
+  border: none;
+}
+
+.table thead {
+  background: linear-gradient(90deg, #007bff, #4e8dff);
+  color: #fff;
+  font-size: 1rem;
+}
+
+.table th, 
+.table td {
+  text-align: center;
+  vertical-align: middle;
+  padding: 0.9rem;
+  font-size: 0.96rem;
+  border: 1px solid #f0f0f0;
+}
+
+.table tbody tr {
+  transition: all 0.3s ease;
+}
+
+.table tbody tr:hover {
+  background: rgba(0, 123, 255, 0.08);
+  transform: scale(1.01);
+}
+
+/* 📱 Responsive Adjustments */
+@media (max-width: 768px) {
+  .transaction-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .btn-modern {
+    width: 100%;
+  }
+}
+
+/* 🧭 Pagination */
+.pagination-wrapper {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.pagination button {
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, #e3e9ff, #cddaff);
+  color: #0d6efd;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 3px 10px rgba(13, 110, 253, 0.2);
+}
+
+.pagination button:hover {
+  background: linear-gradient(135deg, #0d6efd, #4e8dff);
+  color: #fff;
+  transform: translateY(-2px);
+}
+
+.pagination button.active {
+  background: linear-gradient(135deg, #0042c0, #0068ff);
+  color: #fff;
+}
+
+/* ✨ Animations */
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
