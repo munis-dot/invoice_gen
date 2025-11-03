@@ -41,7 +41,7 @@ function apiRequest(string $url, string $method = 'GET', array $data = []): ?arr
 
     $finalUrl = apiUrl($url);
     $method = strtoupper($method);
-    // echo $finalUrl;
+    //echo $finalUrl;
     $headers = [
         'Content-Type: application/json',
         'Authorization: Bearer ' . (getJwtToken() ?? ''),
