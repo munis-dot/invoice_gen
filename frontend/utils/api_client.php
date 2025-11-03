@@ -89,5 +89,4 @@ function apiRequest(string $url, string $method = 'GET', array $data = []): ?arr
 
     return $decoded;
 }
-
 ?>
