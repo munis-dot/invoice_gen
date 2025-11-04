@@ -18,7 +18,7 @@ class InvoiceController extends Controller
         try {
             // Get JSON payload
             $payload = json_decode(file_get_contents("php://input"), true);
-            if (!$payload || !isset($payload['customerId'], $payload['invoiceNumber'], $payload['date'], $payload['amount'], $payload['paymentMethod'])) {
+            if (!$payload || !isset($payload['customerId'], $payload['invoiceNumber'], $payload['date'], $payload['amount'], $payload['paymentMethod'], $payload['company_logo'], $payload['email'], $payload['address'])) {
                 http_response_code(400);
                 echo json_encode(['error' => 'Invalid payload']);
                 return;

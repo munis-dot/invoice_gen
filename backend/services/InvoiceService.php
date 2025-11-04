@@ -28,6 +28,9 @@ class InvoiceService
         $paymentMethod = $payload['paymetMethod'] ?? 'cash';
         $userId = $payload['created_by'] ?? null;
         $discountEnabled = $payload['discount'] === 'false' ? false : true;
+        $companyLogo = $payload['company_logo'] ?? null;
+        $email = $payload['email'] ?? null;
+        $address = $payload['address'] ?? null;
 
         // 1️⃣ Fetch all available products
         $products = $this->invoiceModel->getAllProducts();
@@ -35,6 +38,9 @@ class InvoiceService
         // 2️⃣ Apply algorithm to select products & adjust discounts
         $productMix = $this->generateProductMix($products, $targetAmount, $discountEnabled);
         // 3️⃣ Save invoice
+        if(!$productMix){
+            throw new Exception("Unable to generate invoice for the given amount.");
+        }
         $invoiceId = $this->invoiceModel->createInvoice([
             'invoice_number' => $invoiceNumber,
             'customer_id' => $customerId,
@@ -45,6 +51,9 @@ class InvoiceService
             'tax' => $productMix['summary']['tax'],
             'total' => $productMix['summary']['total'],
             'created_by' => $userId,
+            'company_logo' => $companyLogo,
+            'email' => $email,
+            'address' => $address,
             'pdf_path' => null
         ]);
 
@@ -65,7 +74,7 @@ class InvoiceService
     }
 
     // ---------------- Algorithm ----------------
-    function generateProductMix(array $products, float $targetAmount, bool $enableDiscount = true): array
+    function generateProductMix(array $products, float $targetAmount, bool $enableDiscount = true): array|false
 {
     $max_attempts = 50;
     $selected = [];
@@ -75,7 +84,8 @@ class InvoiceService
     if ($enableDiscount) {
         // Mode 1: Enable discount - aim for >= target, prefer <=1.25x for <=20% discount
         $success = false;
-        $maxAllowedTotal = $targetAmount + 200.0;
+        $maxAllowedTotal = ($targetAmount * 0.2) < 200.0 ? $targetAmount * 0.2  : 200.0;
+        $maxAllowedTotal += $targetAmount;
 
         // Retry loop to find selection where target <= total <= target*1.25
         $attempts = 0;
@@ -131,7 +141,7 @@ class InvoiceService
         if (!$success) {
             $selected = [];
             $total = 0.0;
-            $fallbackMax = $targetAmount + 300.0; // Allow up to 2x for fallback
+            $fallbackMax = $targetAmount * 0.3 < 300.0 ? ($targetAmount * 0.3) + $targetAmount : $targetAmount + 300.0; // Allow up to 2x for fallback
             shuffle($products);
             foreach ($products as $product) {
                 if ($total >= $targetAmount) break;
@@ -180,7 +190,7 @@ class InvoiceService
                     $subTotal = $price * $qty;
                     $tax = $subTotal * ($taxRate / 100);
                     $totalWithTax = $subTotal + $tax;
-                    if ($total + $totalWithTax > $fallbackMax * 1.5) continue;
+                    if ($total + $totalWithTax > $fallbackMax) continue;
 
                     $selected[] = [
                         'id' => $product['id'],
@@ -205,21 +215,21 @@ class InvoiceService
 
         if ($discountNeeded > 0 && $actualTotal > 0) {
             $discountPercent = ($discountNeeded / $actualTotal) * 100;
-            foreach ($selected as &$item) {
-                $itemDiscount = ($item['total'] * $discountPercent) / 100;
-                $item['discount'] = round($itemDiscount, 2);
-                $item['total'] = round($item['total'] - $itemDiscount, 2);
-            }
-            unset($item);
+            // foreach ($selected as &$item) {
+            //     $itemDiscount = ($item['total'] * $discountPercent) / 100;
+            //     $item['discount'] = round($itemDiscount, 2);
+            //     $item['total'] = round($item['total'] - $itemDiscount, 2);
+            // }
+            // unset($item);
 
             // Adjust last item if rounding causes discrepancy (ensure exact match)
-            $current_sum = array_sum(array_column($selected, 'total'));
-            $diff = round($targetAmount - $current_sum, 2);
-            if (abs($diff) > 0.01 && !empty($selected)) {
-                $last_item =& $selected[count($selected) - 1];
-                $last_item['discount'] += $diff;
-                $last_item['total'] -= $diff;
-            }
+            // $current_sum = array_sum(array_column($selected, 'total'));
+            // $diff = round($targetAmount - $current_sum, 2);
+            // if (abs($diff) > 0.01 && !empty($selected)) {
+            //     $last_item =& $selected[count($selected) - 1];
+            //     $last_item['discount'] += $diff;
+            //     $last_item['total'] -= $diff;
+            // }
         }
     } else {
         // Mode 2: Disable discount - aim for closest total <= targetAmount
@@ -231,6 +241,7 @@ class InvoiceService
             $tempSelected = [];
             $tempTotal = 0.0;
             shuffle($products);
+            $maxAllowed = $targetAmount * 0.1 > 150 ? 150 : $targetAmount * 0.1;
             foreach ($products as $product) {
                 $price = (float)$product['price'];
                 $taxRate = (float)($product['tax_rate'] ?? 0);
@@ -246,7 +257,8 @@ class InvoiceService
                 $totalWithTax = $subTotal + $tax;
 
                 // Skip if would exceed target (stay under or equal)
-                if ((($tempTotal + $totalWithTax) > ($targetAmount + 150)) || (($tempTotal + $totalWithTax) < $targetAmount)) continue;
+                
+                if ((($tempTotal + $totalWithTax) > ($targetAmount + $maxAllowed))) continue;
 
                 $tempSelected[] = [
                     'id' => $product['id'],
@@ -266,7 +278,7 @@ class InvoiceService
 
             // Track the closest under target
             $tempDiff = $targetAmount - $tempTotal;
-            if ($tempDiff < $bestDiff && $tempTotal > 0) {
+            if ($tempDiff < $bestDiff && $tempTotal > 0 && $tempTotal <= ($targetAmount + $maxAllowed) && $tempTotal >= $targetAmount) {
                 $bestDiff = $tempDiff;
                 $bestSelected = $tempSelected;
                 $bestTotal = $tempTotal;
@@ -276,38 +288,9 @@ class InvoiceService
         $selected = $bestSelected;
         $total = $bestTotal;
 
-        // If nothing found, fallback to smallest possible selection
-        if (empty($selected)) {
-            // Sort products by price ascending, add cheapest until close
-            usort($products, function($a, $b) {
-                return (float)$a['price'] <=> (float)$b['price'];
-            });
-            foreach ($products as $product) {
-                if ($total >= $targetAmount) break;
-                $price = (float)$product['price'];
-                $taxRate = (float)($product['tax_rate'] ?? 0);
-                $type = $product['product_type'] ?? 'physical';
-                $stock = (int)($product['stock'] ?? 1);
-                $qty = 1; // Minimal qty
-                $subTotal = $price * $qty;
-                $tax = $subTotal * ($taxRate / 100);
-                $totalWithTax = $subTotal + $tax;
-                if ($total + $totalWithTax > $targetAmount) continue;
-
-                $selected[] = [
-                    'id' => $product['id'],
-                    'name' => $product['name'],
-                    'type' => $type,
-                    'qty' => $qty,
-                    'price' => round($price, 2),
-                    'tax_rate' => round($taxRate, 2),
-                    'sub_total' => round($subTotal, 2),
-                    'tax' => round($tax, 2),
-                    'discount' => 0.0,
-                    'total' => round($totalWithTax, 2)
-                ];
-                $total += $totalWithTax;
-            }
+       if (empty($selected)) {
+            // No valid selection found under target
+            return false;
         }
     }
 
@@ -315,6 +298,10 @@ class InvoiceService
     $summaryTax = array_sum(array_column($selected, 'tax'));
     $summaryDiscount = array_sum(array_column($selected, 'discount'));
     $summaryTotal = array_sum(array_column($selected, 'total'));
+
+    if( $summaryTotal == 0) {
+        return false;
+    }
 
     return [
         'products' => $selected,

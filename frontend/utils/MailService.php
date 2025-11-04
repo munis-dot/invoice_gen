@@ -31,7 +31,7 @@ class MailService {
             $mail->addAddress($senderMail);
 
             // Optional file stream attachment
-            if ($file && isset($file['tmp_name']) && is_uploaded_file($file['tmp_name'])) {
+            if ($file && isset($file['tmp_name']) ) {
                 $mail->addAttachment(
                     $file['tmp_name'],
                     $file['name'] ?? 'attachment'
