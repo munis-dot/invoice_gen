@@ -64,6 +64,9 @@ try {
             total DECIMAL(10,2) NOT NULL,
             payment_method VARCHAR(50) NOT NULL DEFAULT 'cash',
             pdf_path VARCHAR(255),
+            address TEXT,
+            email VARCHAR(150),
+            company_logo VARCHAR(255),
             created_by INT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
@@ -99,9 +102,13 @@ try {
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     ");
 
+
+
     if ($pdo->inTransaction()) {
         $pdo->commit();
     }
+
+    
 
     // echo "✅ All tables created successfully with relationships.";
     

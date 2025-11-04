@@ -41,6 +41,12 @@ class Customer {
 
     public static function delete(int $id): bool {
         $stmt = DB::connect()->prepare("DELETE FROM customers WHERE id = ?");
+        //delete customer invoices
+        $stmt2 = DB::connect()->prepare("DELETE FROM invoices WHERE customer_id = ?");
+        $stmt2->execute([$id]);
+        //delete customer invoices items
+        $stmt3 = DB::connect()->prepare("DELETE FROM invoice_items WHERE invoice_id IN (SELECT id FROM invoices WHERE customer_id = ?)");
+        $stmt3->execute([$id]);
         return $stmt->execute([$id]);
     }
 

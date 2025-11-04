@@ -28,7 +28,7 @@ export function initializeFormHandler(config) {
 
             try {
                 const formData = new FormData(form);
-                const imageFile = formData.get('image_url');
+                const imageFile = formData.get('image_url') ?? formData.get('company_logo');
                 const data = Object.fromEntries(formData);
                 const isEdit = !!data.id; // Check if we have an ID (edit mode)
                 // Handle image upload if present
@@ -63,13 +63,16 @@ export function initializeFormHandler(config) {
                     console.log(imagePath)
                     // Replace file with path in data
                     data.image_url = imagePath;
+                    data.company_logo = imagePath;
                 } else if (!isEdit) {
                     // For new records without image
                     data.image_url = null;
+                    data.company_logo = null;
                 }
                 // For edit mode without new image, keep existing image_url
                 else if (isEdit && !imageFile?.size > 0) {
                     data.image_url = data.image;
+                    data.company_logo = data.image;
                 }
                 delete data.image; // Remove the file object
                 
@@ -86,8 +89,9 @@ export function initializeFormHandler(config) {
                 });
 
                 const result = await response.json();
+                console.log(result)
                 if (result && !result.error) {
-                    const message = data.id ? 'Item updated successfully!' : 'Item added successfully!';
+                    const message = data.id ? 'Updated successfully!' : 'Added successfully!';
                     showResult(true, message);
                     if (!data.id) {
                         form.reset(); // Only reset form for new items
