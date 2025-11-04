@@ -90,16 +90,26 @@ export function initializeFormHandler(config) {
 
                 const result = await response.json();
                 console.log(result)
-                if (result && !result.error) {
+               if (result && !result.error) {
                     const message = data.id ? 'Updated successfully!' : 'Added successfully!';
                     showResult(true, message);
                     if (!data.id) {
                         form.reset(); // Only reset form for new items
                     }
                     if (onSuccess) onSuccess(result, message ?? 'success');
-                } else {
+                } 
+                // ❌ Error Case
+                else {
                     const action = data.id ? 'update' : 'add';
-                    showResult(false, result.error || `Failed to ${action} item.`);
+                    const errorMsg = result.error || `Failed to ${action} item.`;
+
+                    // ✅ Special case for invoice amount issue
+                    if (errorMsg.includes('Unable to generate invoice for the given amount')) {
+                        alert('⚠️ Unable to generate invoice: Transaction amount is too low.');
+                    } else {
+                        showResult(false, errorMsg);
+                    }
+
                     if (onError) onError(result.error);
                 }
             } catch (err) {
