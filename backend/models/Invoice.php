@@ -103,7 +103,7 @@ class Invoice
         $stmt = $pdo->prepare("
         SELECT 
             i.id AS invoice_id, i.invoice_number, i.date, i.subtotal, i.discount, i.tax, i.total, 
-            i.created_at, i.created_by, i.company_logo, i.email, i.address,
+            i.created_at, i.created_by,
             
             c.id AS customer_id, c.name AS customer_name, c.phone AS customer_phone, 
             c.email AS customer_email, c.address AS customer_address,
@@ -141,9 +141,6 @@ class Invoice
             'created_at' => $first['created_at'],
             'created_by' => $first['created_by'],
             'created_by_name' => $first['created_by_name'],
-            'company_logo' => $first['company_logo'],
-            'email' => $first['email'],
-            'address' => $first['address'],
             'customer' => [
                 'id' => $first['customer_id'],
                 'name' => $first['customer_name'],
@@ -174,6 +171,7 @@ class Invoice
                 ],
             ];
         }
+
         return $invoice;
     }
 
@@ -188,8 +186,8 @@ class Invoice
     public function createInvoice(array $data)
     {
         $stmt = $this->pdo->prepare("
-            INSERT INTO invoices (invoice_number, customer_id, date, subtotal, discount, tax, total, created_by, pdf_path, company_logo, email, address)
-            VALUES (:invoice_number, :customer_id, :date, :subtotal, :discount, :tax, :total, :created_by, :pdf_path, :company_logo, :email, :address)
+            INSERT INTO invoices (invoice_number, customer_id, date, subtotal, discount, tax, total, created_by, pdf_path)
+            VALUES (:invoice_number, :customer_id, :date, :subtotal, :discount, :tax, :total, :created_by, :pdf_path)
         ");
         $stmt->execute([
             ':invoice_number' => $data['invoice_number'],
@@ -200,11 +198,7 @@ class Invoice
             ':tax' => $data['tax'] ?? 0,
             ':total' => $data['total'],
             ':created_by' => $data['created_by'] ?? null,
-            ':pdf_path' => $data['pdf_path'] ?? null,
-            ':company_logo' => $data['company_logo'] ?? null,
-            ':email' => $data['email'] ?? null,
-            ':address' => $data['address'] ?? null,
-
+            ':pdf_path' => $data['pdf_path'] ?? null
         ]);
         return $this->pdo->lastInsertId();
     }
@@ -334,33 +328,24 @@ class Invoice
         return (int) $stmt->fetchColumn();
     }
 
-    public static function delete(int $id): bool
-    {
-        $stmt = DB::connect()->prepare("DELETE FROM invoices WHERE id = ?");
-        //delete invoice items
-        $stmt2 = DB::connect()->prepare("DELETE FROM invoice_items WHERE invoice_id = ?");
-        $stmt2->execute([$id]);
-        return $stmt->execute([$id]);
-    }
     /**
      * Create multiple invoices at once
      * @param array $invoices Array of invoice data with their items
      * @return array Array containing success status and any errors
      */
-    public static function createAll(array $invoices): array
-    {
+    public static function createAll(array $invoices): array {
         require_once __DIR__ . '/Customer.php';
-
+        
         $errors = [];
         $db = DB::connect();
         $db->beginTransaction();
         $invoiceService = new InvoiceService();
-
+        
         // Required fields validation
-        $requiredFields = ['invoiceNumber', 'paymentMethod', 'customerId', 'date', 'amount', 'discount', 'company_logo', 'email', 'address'];
+        $requiredFields = ['invoiceNumber', 'paymentMethod', 'customerId', 'date', 'amount', 'discount'];
         $successCount = 0;
         $processedInvoices = [];
-
+        
         try {
             foreach ($invoices as $index => $invoice) {
                 // Validate required fields
@@ -370,7 +355,7 @@ class Invoice
                         $missingFields[] = $field;
                     }
                 }
-
+                
                 if (!empty($missingFields)) {
                     $errors[] = [
                         'index' => $index,
@@ -379,7 +364,7 @@ class Invoice
                     ];
                     continue;
                 }
-
+                
                 // Validate customer exists
                 $customer = Customer::find($invoice['customerId']);
                 if (!$customer) {
@@ -400,15 +385,12 @@ class Invoice
                         'amount' => $invoice['amount'],
                         'created_by' => $invoice['created_by'] ?? null,
                         'discount' => $invoice['discount'] ?? true,
-                        'paymentMethod' => $invoice['paymentMethod'] ?? 'cash',
-                        'company_logo' => $invoice['company_logo'] ?? null,
-                        'email' => $invoice['email'] ?? null,
-                        'address' => $invoice['address'] ?? null,
+                        'paymentMethod' => $invoice['paymentMethod'] ?? 'cash'
                     ]);
-
+                    
                     $processedInvoices[] = $result;
                     $successCount++;
-
+                    
                 } catch (Exception $e) {
                     $errors[] = [
                         'index' => $index,
@@ -418,7 +400,7 @@ class Invoice
                     continue;
                 }
             }
-
+            
             if (empty($errors)) {
                 $db->commit();
                 return [
@@ -440,7 +422,7 @@ class Invoice
                     'message' => 'Failed to create invoices due to validation errors'
                 ];
             }
-
+            
         } catch (Exception $e) {
             $db->rollBack();
             return [
@@ -448,25 +430,22 @@ class Invoice
                 'total' => count($invoices),
                 'successful' => $successCount,
                 'failed' => count($invoices) - $successCount,
-                'errors' => [
-                    [
-                        'message' => 'Transaction failed: ' . $e->getMessage()
-                    ]
-                ],
+                'errors' => [[
+                    'message' => 'Transaction failed: ' . $e->getMessage()
+                ]],
                 'message' => 'Failed to create invoices'
             ];
         }
     }
 
-
-    //get by customer id
-    public static function getByCustomerId(int $customerId): array
-    {
-        $db = DB::connect();
-        $stmt = $db->prepare("SELECT * FROM invoices WHERE customer_id = :customerId");
-        $stmt->execute([':customerId' => $customerId]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-    }
+//get by customer id
+public static function getByCustomerId(int $customerId): array
+{
+    $db = DB::connect();
+    $stmt = $db->prepare("SELECT * FROM invoices WHERE customer_id = :customerId");
+    $stmt->execute([':customerId' => $customerId]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+}
 
 }
 

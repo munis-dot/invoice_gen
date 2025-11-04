@@ -6,6 +6,7 @@ if (!$data || isset($data['error'])) {
     die("<h2 style='text-align:center;color:red;'>Failed to load data</h2>");
 }
 $item = $data['item'] ?? $data;
+
 // Helper to safely get nested value (like category.name)
 function getNestedValue($data, $path)
 {

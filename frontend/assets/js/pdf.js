@@ -37,48 +37,16 @@ function downloadElementAsPDF(filename = 'invoice.pdf') {
 }
 
 // Function to email the element (generates PDF download first, then opens mailto: for manual attachment)
-// function emailElementAsPDF(toEmail = '', subject = 'Invoice') {
-//   const filename = 'invoice-temp.pdf';
-//   downloadElementAsPDF(filename); // Triggers download; user attaches manually
+function emailElementAsPDF(toEmail = '', subject = 'Invoice') {
+  const filename = 'invoice-temp.pdf';
+  downloadElementAsPDF(filename); // Triggers download; user attaches manually
 
-//   // Open email client
-//   const body = encodeURIComponent('Please find the attached invoice PDF.');
-//   const mailtoLink = `mailto:${toEmail}?subject=${encodeURIComponent(subject)}&body=${body}`;
-//   window.location.href = mailtoLink;
-// }
-
-function emailElementAsPDF(recipientEmail, subject) {
-    const element = document.querySelector('.invoice-template');
-    if (!element) {
-        alert('Invoice element not found!');
-        return;
-    }
-
-    // Generate PDF as blob
-    html2pdf()
-  .from(element)
-  .set({
-    margin: 1,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2 },
-    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-  })
-  .toPdf()
-  .output('blob')
-  .then(pdfBlob => {
-    const pdfFile = new File([pdfBlob], 'invoice.pdf', { type: 'application/pdf' });
-    const formData = new FormData();
-    formData.append('pdf', pdfFile);
-    formData.append('email', recipientEmail);
-    formData.append('subject', subject);
-    formData.append('body', 'Please find the attached invoice PDF.');
-
-    return fetch('./utils/email_invoice.php', { method: 'POST', body: formData });
-  })
-  .then(res => res.json())
-  .then(data => console.log(data))
-  .catch(console.error);
+  // Open email client
+  const body = encodeURIComponent('Please find the attached invoice PDF.');
+  const mailtoLink = `mailto:${toEmail}?subject=${encodeURIComponent(subject)}&body=${body}`;
+  window.location.href = mailtoLink;
 }
+
 // Function to print the element
 function printElement() {
   const element = document.querySelector('.invoice-template');

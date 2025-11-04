@@ -1,11 +1,7 @@
 <?php
-require_once __DIR__ . '/../../utils/api_client.php';
-
-$count =  apiRequest("/invoice_gen/backend/public/api/dashboard", 'GET');
-
-$customerCount = $count['customer'];
-$invoiceCount = $count['invoice'];
-$productCount = $count['product'];
+$customerCount = 10;
+$invoiceCount = 10;
+$transactionCount = 10;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -41,8 +37,8 @@ $productCount = $count['product'];
 
       <div class="dashboard-card card-transactions">
         <div class="icon">💸</div>
-        <h2><?php echo $productCount; ?></h2>
-        <p>Products</p>
+        <h2><?php echo $transactionCount; ?></h2>
+        <p>Transactions</p>
       </div>
     </div>
   </div>

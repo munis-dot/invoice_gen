@@ -23,7 +23,7 @@ $invoice_number = htmlspecialchars($invoice['invoice_number']);
 <div class="invoice-template classic">
     <div class="invoice-header">
             <div class="company-logo">
-                <img src="<?php echo htmlspecialchars($invoice['company_logo']); ?>" alt="Company Logo">
+                <img src="<?php echo htmlspecialchars("assets/img/Depositphotos_13687440_s-2019.jpg"); ?>" alt="Company Logo">
             </div>
         <div class="invoice-info">
             <h2>INVOICE</h2>
@@ -39,8 +39,10 @@ $invoice_number = htmlspecialchars($invoice['invoice_number']);
     <div class="invoice-addresses">
         <div class="from-address">
             <h4>From</h4>
-            <p><?php echo htmlspecialchars($invoice['address']); ?></p>
-            <p>Email: <?php echo htmlspecialchars($invoice['email']); ?></p>
+            <p>ABC Company</p>
+            <p>123 Main St, City, Sivakasi</p>
+            <p>Phone: 123-456-7890</p>
+            <p>Email: info@abccompany.com</p>
         </div>
         <div class="to-address">
             <h4>Bill To</h4>
