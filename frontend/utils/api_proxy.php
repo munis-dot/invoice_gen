@@ -22,4 +22,5 @@ if (empty($url)) {
 $response = apiRequest($url, $method, $data);
 // Return response as JSON
 echo json_encode($response);
+
 ?>

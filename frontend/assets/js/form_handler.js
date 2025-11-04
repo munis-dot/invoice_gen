@@ -1,4 +1,3 @@
-// Generic form handler for both manual submissions and file uploads
 export function initializeFormHandler(config) {
     const {
         formId,
@@ -6,76 +5,89 @@ export function initializeFormHandler(config) {
         resultDivId,
         apiEndpoint,
         apiEndpointBulk,
-        parseFileUrl = 'utils/parse_excel.php', // optional backend parser
+        parseFileUrl = 'utils/parse_excel.php',
         onSuccess,
         onError
     } = config;
 
-    const form = document.getElementById(formId);
+    const form       = document.getElementById(formId);
     const uploadForm = document.getElementById(uploadFormId);
-    const resultDiv = document.getElementById(resultDivId);
-    console.log(uploadForm)
+    const resultDiv  = document.getElementById(resultDivId);
+
     const showResult = (success, message) => {
         const alertClass = success ? 'alert-success' : 'alert-danger';
         resultDiv.innerHTML = `<div class="alert ${alertClass}">${message}</div>`;
     };
 
+    // --------------------------------------------------------------
+    // Helper: get the *lowest* product price via api_proxy.php
+    // --------------------------------------------------------------
+    const getMinProductPrice = async () => {
+        const payload = {
+            action: 'GET_MIN_PRICE'          // <-- our special flag
+        };
+        const resp = await fetch('utils/api_proxy.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await resp.json();
+        return Number(data.min_price) || 0;
+    };
+
+    // --------------------------------------------------------------
     // --- Manual form submission ---
+    // --------------------------------------------------------------
     if (form) {
         form.addEventListener('submit', async function (e) {
             e.preventDefault();
             resultDiv.textContent = 'Submitting...';
 
             try {
-                const formData = new FormData(form);
-                const imageFile = formData.get('image_url') ?? formData.get('company_logo');
-                const data = Object.fromEntries(formData);
-                const isEdit = !!data.id; // Check if we have an ID (edit mode)
-                // Handle image upload if present
+                const formData   = new FormData(form);
+                const imageFile  = formData.get('image_url') ?? formData.get('company_logo');
+                const data       = Object.fromEntries(formData);
+                const isEdit     = !!data.id;
+
+                // ---------- IMAGE HANDLING (unchanged) ----------
                 if (imageFile && imageFile?.size > 0) {
                     const timestamp = Date.now();
-                    const fileName = `${timestamp}_${imageFile.name}`;
+                    const fileName  = `${timestamp}_${imageFile.name}`;
                     const imagePath = `assets/img/products/${fileName}`;
-                    
-                    // Create a folder if it doesn't exist
-                    try {
-                        await fetch('utils/create_folder.php', {
-                            method: 'POST',
-                            body: JSON.stringify({ path: 'assets/img/products' })
-                        });
-                    } catch (err) {
-                        console.error('Error creating folder:', err);
-                    }
-                    
-                    // Upload the image
-                    const imageFormData = new FormData();
-                    imageFormData.append('image', imageFile);
-                    imageFormData.append('path', imagePath);
-                    
-                    const uploadResponse = await fetch('utils/upload_file.php', {
+
+                    await fetch('utils/create_folder.php', {
                         method: 'POST',
-                        body: imageFormData
-                    });
-                    
-                    if (!uploadResponse.ok) {
-                        throw new Error('Failed to upload image');
-                    }
-                    console.log(imagePath)
-                    // Replace file with path in data
-                    data.image_url = imagePath;
-                    data.company_logo = imagePath;
+                        body: JSON.stringify({ path: 'assets/img/products' })
+                    }).catch(() => {});
+
+                    const imgForm = new FormData();
+                    imgForm.append('image', imageFile);
+                    imgForm.append('path', imagePath);
+
+                    const up = await fetch('utils/upload_file.php', { method: 'POST', body: imgForm });
+                    if (!up.ok) throw new Error('Image upload failed');
+
+                    data.image_url = data.company_logo = imagePath;
                 } else if (!isEdit) {
-                    // For new records without image
-                    data.image_url = null;
-                    data.company_logo = null;
+                    data.image_url = data.company_logo = null;
+                } else if (isEdit && !imageFile?.size > 0) {
+                    data.image_url = data.company_logo = data.image;
                 }
-                // For edit mode without new image, keep existing image_url
-                else if (isEdit && !imageFile?.size > 0) {
-                    data.image_url = data.image;
-                    data.company_logo = data.image;
+                delete data.image;
+
+                // ---------- AMOUNT VALIDATION ----------
+                const submittedAmount = Number(data.amount) || 0;
+                const minProductPrice  = await getMinProductPrice();
+
+                if (submittedAmount > 0 && submittedAmount < minProductPrice) {
+                    // **Your exact rule**
+                    alert('Unable to generate invoice: Transaction amount is too low.');
+                    showResult(false, 'Transaction amount is too low.');
+                    if (onError) onError('amount_too_low');
+                    return;                 // abort the real API call
                 }
-                delete data.image; // Remove the file object
-                
+
+                // ---------- SEND TO API ----------
                 const payload = {
                     url: isEdit ? `${apiEndpoint}?id=${data.id}` : apiEndpoint,
                     method: isEdit ? 'PUT' : 'POST',
@@ -89,37 +101,27 @@ export function initializeFormHandler(config) {
                 });
 
                 const result = await response.json();
-                console.log(result)
-               if (result && !result.error) {
-                    const message = data.id ? 'Updated successfully!' : 'Added successfully!';
-                    showResult(true, message);
-                    if (!data.id) {
-                        form.reset(); // Only reset form for new items
-                    }
-                    if (onSuccess) onSuccess(result, message ?? 'success');
-                } 
-                // ❌ Error Case
-                else {
-                    const action = data.id ? 'update' : 'add';
-                    const errorMsg = result.error || `Failed to ${action} item.`;
 
-                    // ✅ Special case for invoice amount issue
-                    if (errorMsg.includes('Unable to generate invoice for the given amount')) {
-                        alert('⚠️ Unable to generate invoice: Transaction amount is too low.');
-                    } else {
-                        showResult(false, errorMsg);
-                    }
-
+                if (result && !result.error) {
+                    const msg = data.id ? 'Updated successfully!' : 'Added successfully!';
+                    showResult(true, msg);
+                    if (!data.id) form.reset();
+                    if (onSuccess) onSuccess(result, msg);
+                } else {
+                    const err = result.error || `Failed to ${data.id ? 'update' : 'add'} item.`;
+                    showResult(false, err);
                     if (onError) onError(result.error);
                 }
             } catch (err) {
-                showResult(false, `Error: ${err}`);
+                showResult(false, `Error: ${err.message}`);
                 if (onError) onError(err);
             }
         });
     }
 
-    // --- CSV/XLSX Upload ---
+    // --------------------------------------------------------------
+    // --- CSV/XLSX Upload (unchanged) ---
+    // --------------------------------------------------------------
     if (uploadForm) {
         uploadForm.addEventListener('submit', async function (e) {
             e.preventDefault();
@@ -127,31 +129,21 @@ export function initializeFormHandler(config) {
 
             try {
                 const formData = new FormData(uploadForm);
-                // Step 1: Parse file using backend helper (returns JSON data)
-                const parseResponse = await fetch(parseFileUrl, {
-                    method: 'POST',
-                    body: formData
-                });
-                const parsed = await parseResponse.json();
+                const parseResp = await fetch(parseFileUrl, { method: 'POST', body: formData });
+                const parsed = await parseResp.json();
 
                 if (!parsed || !Array.isArray(parsed.items)) {
                     throw new Error('Invalid file or parsing error.');
                 }
 
-                // Step 2: Send parsed data to your API via api_proxy.php
-                const payload = {
-                    url: apiEndpointBulk,
-                    method: 'POST',
-                    data: parsed.items // your parsed rows
-                };
-
-                const apiResponse = await fetch('utils/api_proxy.php', {
+                const payload = { url: apiEndpointBulk, method: 'POST', data: parsed.items };
+                const apiResp = await fetch('utils/api_proxy.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
 
-                const result = await apiResponse.json();
+                const result = await apiResp.json();
                 if (result && !result.error) {
                     showResult(true, 'Bulk upload successful!');
                     uploadForm.reset();
