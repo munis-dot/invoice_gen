@@ -9,7 +9,7 @@ $config = [
     'fields' => [
         ['name' => 'name', 'label' => 'Product Name', 'type' => 'text', 'required' => true],
         ['name' => 'sku', 'label' => 'SKU', 'type' => 'text', 'required' => true],
-        ['name' => 'price', 'label' => 'Price', 'type' => 'number', 'prefix' => '₹', 'step' => '0.01', 'required' => true],
+        ['name' => 'price', 'label' => 'Price', 'type' => 'number', 'prefix' => '$', 'step' => '0.01', 'required' => true],
         ['name' => 'tax_rate', 'label' => 'Tax Rate (%)', 'type' => 'number', 'suffix' => '%', 'step' => '0.01', 'required' => true],
         ['name' => 'stock', 'label' => 'Stock', 'type' => 'number', 'required' => true],
         ['name' => 'product_type', 'label' => 'Product Type', 'type' => 'select', 'required' => true, 'options' => [

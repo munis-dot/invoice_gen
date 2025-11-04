@@ -7,9 +7,11 @@ require_once '../services/InvoiceService.php';
 class InvoiceController extends Controller
 {
     protected $service;
+    protected $product;
     public function __construct()
     {
         $this->service = new InvoiceService();
+        $this->product = new Product();
     }
 
     // POST /api/invoice/generate
@@ -33,6 +35,13 @@ class InvoiceController extends Controller
             echo json_encode(['error' => $e->getMessage()]);
             return;
         }
+    }
+
+    public function createInvoice(int $amount,bool $discountEnabled){
+        $products = $this->product->all();
+        $discountEnabled = filter_var($discountEnabled, FILTER_VALIDATE_BOOLEAN);
+        $response = $this->service->generateProductMix($products, $amount, $discountEnabled);
+        $this->json($response);
     }
 
     public function index()

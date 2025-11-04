@@ -122,10 +122,10 @@ function renderInvoice(invoice) {
   totalsBlock.style.top = (itemsBlock.offsetTop + itemsBlock.offsetHeight + 20) + 'px';
 
   totalsBlock.innerHTML = `
-    Subtotal: ₹${invoice.subtotal}<br>
-    Discount: ₹${invoice.discount}<br>
-    Tax: ₹${invoice.tax}<br>
-    <b>Total: ₹${invoice.total}</b>
+    Subtotal: $${invoice.subtotal}<br>
+    Discount: $${invoice.discount}<br>
+    Tax: $${invoice.tax}<br>
+    <b>Total: $${invoice.total}</b>
   `;
 }
 

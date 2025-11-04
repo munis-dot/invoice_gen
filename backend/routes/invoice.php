@@ -15,6 +15,12 @@ $router->add('GET','/api/invoice', function() {
     (new InvoiceController())->findById($id);
 });
 
+$router->add('GET', '/api/invoice/create', function() {
+    $amount = isset($_GET['amount']) ? (int) $_GET['amount'] : 0;
+    $discountEnabled = filter_var($_GET['discount'] ?? 'true', FILTER_VALIDATE_BOOLEAN);  // Parse  // Safe default
+    (new InvoiceController())->createInvoice($amount, $discountEnabled);
+});
+
 $router->add('POST', '/api/invoices', function() {
     (new InvoiceController())->store();
 });
