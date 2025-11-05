@@ -37,7 +37,7 @@ class InvoiceController extends Controller
         }
     }
 
-    public function createInvoice(int $amount,bool $discountEnabled){
+    public function createInvoice(float $amount,bool $discountEnabled){
         $products = $this->product->all();
         $discountEnabled = filter_var($discountEnabled, FILTER_VALIDATE_BOOLEAN);
         $response = $this->service->generateProductMix($products, $amount, $discountEnabled);
