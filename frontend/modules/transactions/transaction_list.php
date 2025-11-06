@@ -1,13 +1,8 @@
-<?php
-// UI: Transaction List
-require_once __DIR__ . '/../../components/header.php';
-?>
-<link rel="stylesheet" href="/frontend/assets/css/transaction_list.css">
-
-<div class="transaction-container container mt-4">
-    <div class="transaction-header">
+<div class="list-container">
+    <div class="list-header">
         <h2 class="page-title">
-            <i class="fas fa-receipt"></i> Transaction List
+            <i class="fas fa-receipt"></i> 
+            Transaction List
         </h2>
 
         <div class="header-actions">
@@ -27,7 +22,7 @@ require_once __DIR__ . '/../../components/header.php';
     </div>
 
     <div class="table-responsive">
-        <table class="table table-hover table-bordered" id="transactionTable">
+        <table class="table table-modern" id="transactionTable">
             <thead>
                 <tr>
                     <th>ID</th>
@@ -41,6 +36,12 @@ require_once __DIR__ . '/../../components/header.php';
             </thead>
             <tbody>
                 <!-- Transaction rows will be injected by JS -->
+                <tr class="loading-row">
+                    <td colspan="8">
+                        <div class="loading-spinner"></div>
+                        Loading transactions...
+                    </td>
+                </tr>
             </tbody>
         </table>
     </div>

@@ -1,0 +1,285 @@
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    grid-template-columns: 300px 1fr;
+    gap: 20px;
+    font-family: 'Poppins', sans-serif;
+}
+
+header {
+    grid-column: 1 / -1;
+    text-align: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+h1 {
+    color: #2c3e50;
+    margin-bottom: 10px;
+}
+
+.panel {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+}
+
+.elements-panel h2,
+.invoice-preview h2 {
+    margin-bottom: 15px;
+    color: #2c3e50;
+    font-size: 1.3rem;
+}
+
+.element-item {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 5px;
+    padding: 12px;
+    width: 200px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    display: inline-block;
+    transition: all 0.2s;
+    user-select: none;
+}
+
+.element-item:hover {
+    background: #e9ecef;
+    transform: translateY(-2px);
+}
+
+.element-item:active {
+    cursor: grabbing;
+}
+
+.element-item.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.element-item.disabled:hover {
+    background: #f8f9fa;
+    transform: none;
+}
+
+.invoice-preview {
+    min-height: 800px;
+    position: relative;
+    background: white;
+    padding: 40px;
+    border: 1px solid #ddd;
+}
+
+.invoice-element {
+    position: absolute;
+    border: 1px dashed #bbb;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.9);
+    cursor: move;
+    min-width: 150px;
+    transition: all 0.2s;
+}
+
+.invoice-element:hover {
+    border-color: #3498db;
+    box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+}
+
+.invoice-element.active {
+    border: 2px solid #3498db;
+    z-index: 10;
+}
+
+.element-controls {
+    position: absolute;
+    top: -30px;
+    right: 0;
+    background: #3498db;
+    color: white;
+    border-radius: 3px;
+    display: none;
+}
+
+.invoice-element.active .element-controls {
+    display: flex;
+}
+
+.control-btn {
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.control-btn:hover {
+    background: #2980b9;
+}
+
+.position-options {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+}
+
+.position-options h3 {
+    margin-bottom: 10px;
+    font-size: 1rem;
+}
+
+.position-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
+}
+
+.position-btn {
+    padding: 8px 5px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: center;
+    font-size: 12px;
+}
+
+.position-btn:hover {
+    background: #e9ecef;
+}
+
+.position-btn.active {
+    background: #3498db;
+    color: white;
+    border-color: #3498db;
+}
+
+.actions {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background: #3498db;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #2980b9;
+}
+
+.btn-secondary {
+    background: #95a5a6;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #7f8c8d;
+}
+
+.invoice-header {
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.invoice-details,
+.from-address,
+.to-address {
+    font-size: 14px;
+}
+
+.items-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.items-table th,
+.items-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+.items-table th {
+    background: #f2f2f2;
+}
+
+.total-summary {
+    text-align: right;
+    font-weight: bold;
+}
+
+.company-logo {
+    text-align: center;
+}
+
+.logo-placeholder {
+    width: 150px;
+    height: 80px;
+    background: #f8f9fa;
+    border: 1px dashed #bbb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+}
+
+.footer {
+    text-align: center;
+    font-size: 12px;
+    color: #6c757d;
+}
+
+.mode-toggle {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.toggle-btn {
+    padding: 8px 16px;
+    background: #ecf0f1;
+    border: 1px solid #bdc3c7;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.toggle-btn.active {
+    background: #3498db;
+    color: white;
+    border-color: #3498db;
+}
+
+.preview-mode .invoice-element {
+    border: none;
+    cursor: default;
+}
+
+.preview-mode .invoice-element:hover {
+    border: none;
+    box-shadow: none;
+}
+
+.preview-mode .element-controls {
+    display: none !important;
+}
+
+.preview-mode .invoice-preview {
+    cursor: default;
+}

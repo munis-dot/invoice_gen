@@ -1,8 +1,8 @@
 // Function to download the element as PDF
 function downloadElementAsPDF(filename = 'invoice.pdf') {
-  const element = document.querySelector('.invoice-template');
+  const element = document.querySelector('.panel');
   if (!element) {
-    console.error('Element with class .invoice-template not found');
+    console.error('Element with class .panel not found');
     return;
   }
 
@@ -48,7 +48,7 @@ function downloadElementAsPDF(filename = 'invoice.pdf') {
 // }
 
 function emailElementAsPDF(recipientEmail, subject) {
-    const element = document.querySelector('.invoice-template');
+    const element = document.querySelector('.panel');
     if (!element) {
         alert('Invoice element not found!');
         return;
@@ -81,9 +81,9 @@ function emailElementAsPDF(recipientEmail, subject) {
 }
 // Function to print the element
 function printElement() {
-  const element = document.querySelector('.invoice-template');
+  const element = document.querySelector('.panel');
   if (!element) {
-    console.error('Element with class .invoice-template not found');
+    console.error('Element with class .panel not found');
     return;
   }
 
@@ -93,14 +93,19 @@ function printElement() {
     <html>
       <head>
         <title>Invoice Print</title>
-        <link rel="stylesheet" href="D:\php\htdocs\invoice_gen\frontend\assets\css\invoice.css">
+        <link rel="stylesheet" href="D:\php\htdocs\invoice_gen\frontend\assets\css\invoice_builder.css">
       </head>
+      <style>
+      *:not(.items-table th, .items-table td) {
+    border:none !important;    
+}
+      </style>
       <body>${element.innerHTML}</body>
     </html>
   `);
   printWindow.document.close();
   // Alternative method: Fetch external CSS and inject as inline <style>
-  const cssPath = 'assets/css/invoice.css'; // Replace with your actual CSS path
+  const cssPath = 'assets/css/invoice_builder.css'; // Replace with your actual CSS path
   fetch(cssPath)
     .then(response => response.text())
     .then(css => {

@@ -41,6 +41,7 @@ async function initializePage(page) {
     'products/create': 'assets/js/product_form.js',
     'transactions/transaction_list': 'assets/js/transaction_list.js',
     'transactions/transaction_add': 'assets/js/transaction_add.js',
+    'transactions/transaction_view': 'assets/js/invoice_builder.js',
   };
 
   // Load the appropriate script for the page
@@ -48,11 +49,11 @@ async function initializePage(page) {
     try {
       const scriptSrc = pageScripts[page];
       const scriptPath = new URL(scriptSrc, window.location.href).href;
-      
+
       // Import the module directly
       const module = await import(scriptPath);
       console.log('Module loaded:', module);
-      
+
       if (module.default && typeof module.default === 'function') {
         try {
           new module.default();
@@ -81,6 +82,16 @@ const getUrlParameter = (name) => {
 document.addEventListener("click", (e) => {
   if (e.target.matches("[data-link]")) {
     e.preventDefault();
+    const navLinks = document.querySelectorAll('.nav-link');
+    const currentPage = new URLSearchParams(window.location.search).get('page') || 'dashboard';
+    function setActiveLink(page) {
+      navLinks.forEach(link => {
+        link.classList.remove('active');
+      });
+      e.target.classList.add('active');
+
+    }
+    setActiveLink(currentPage);
     console.log("first")
     let page = e.target.getAttribute("data-link");
     let params = {};
@@ -147,6 +158,7 @@ document.addEventListener("submit", (e) => {
 
 // Initialize on page load
 window.addEventListener('DOMContentLoaded', async () => {
+
   // Load the initial page based on URL parameters
   const urlParams = new URLSearchParams(window.location.search);
   const page = urlParams.get('page');
@@ -156,7 +168,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   const commonScripts = [
     'assets/js/form_handler.js',
     'assets/js/list_handler.js',
-    'assets/js/pdf.js'
+    'assets/js/pdf.js',
+    'assets/js/invoice_builder.js',
   ];
 
   // Load common scripts sequentially and wait for them to complete
@@ -197,5 +210,35 @@ window.addEventListener('popstate', (event) => {
     if (page) {
       loadPage(page, { id });
     }
+  }
+});
+
+const btn = document.getElementById("profileDropdownBtn");
+const menu = document.getElementById("profileDropdown");
+
+btn.addEventListener("click", () => {
+  menu.style.display = menu.style.display === "block" ? "none" : "block";
+});
+
+// Close dropdown when clicking outside
+document.addEventListener("click", function (e) {
+  if (!btn.contains(e.target)) {
+    menu.style.display = "none";
+  }
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+
+  // Function to set active link based on page
+  // Image zoom functionality
+  const zoomBtn = document.querySelector('.zoom-btn');
+  const previewImage = document.querySelector('.preview-image');
+  console.log(zoomBtn, previewImage)
+  if (zoomBtn && previewImage) {
+    zoomBtn.addEventListener('click', function () {
+      previewImage.classList.toggle('zoomed');
+      this.querySelector('i').classList.toggle('fa-expand');
+      this.querySelector('i').classList.toggle('fa-compress');
+    });
   }
 });

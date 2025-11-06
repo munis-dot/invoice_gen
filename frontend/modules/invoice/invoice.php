@@ -1,6 +1,5 @@
 <?php
 require_once __DIR__ . '/../../utils/api_client.php';
-require_once __DIR__ . '/../../components/header.php';
 
 $invoice_id = $_GET['id'] ?? null;
 if (!$invoice_id) {

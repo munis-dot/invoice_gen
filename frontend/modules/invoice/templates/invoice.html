@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customizable Invoice Builder</title>
+    <link rel="stylesheet" href="/invoice_gen/frontend/assets/css/invoice_builder.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div>
+                <h1>Customizable Invoice Builder</h1>
+                <p>Double-click elements to add them to the invoice</p>
+            </div>
+            <div class="mode-toggle">
+                <span>Mode:</span>
+                <button id="edit-mode-btn" class="toggle-btn active">Edit</button>
+                <button id="preview-mode-btn" class="toggle-btn">Preview</button>
+            </div>
+        </header>
+        
+        <div class="panel elements-panel">
+            <h2>Invoice Elements</h2>
+            <div class="element-item" data-type="header">Header</div>
+            <div class="element-item" data-type="invoice-details">Invoice Details</div>
+            <div class="element-item" data-type="from-address">From Address</div>
+            <div class="element-item" data-type="to-address">To Address</div>
+            <div class="element-item" data-type="items-table">Items Table</div>
+            <div class="element-item" data-type="company-logo">Company Logo</div>
+            <div class="element-item" data-type="total-summary">Total Summary</div>
+            <div class="element-item" data-type="footer">Footer</div>
+            
+            <div class="position-options">
+                <h3>Position Options</h3>
+                <div class="position-grid">
+                    <div class="position-btn" data-position="top-left">Top Left</div>
+                    <div class="position-btn" data-position="top-center">Top Center</div>
+                    <div class="position-btn" data-position="top-right">Top Right</div>
+                    <div class="position-btn" data-position="middle-left">Middle Left</div>
+                    <div class="position-btn" data-position="middle-center">Middle Center</div>
+                    <div class="position-btn" data-position="middle-right">Middle Right</div>
+                    <div class="position-btn" data-position="bottom-left">Bottom Left</div>
+                    <div class="position-btn" data-position="bottom-center">Bottom Center</div>
+                    <div class="position-btn" data-position="bottom-right">Bottom Right</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="panel invoice-preview" id="invoice-preview">
+            <h2>Invoice Preview</h2>
+            <!-- Elements will be added here dynamically -->
+        </div>
+        
+        <div class="actions">
+            <button class="btn-primary" id="export-btn">Export as PDF</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const invoicePreview = document.getElementById('invoice-preview');
+            const elementItems = document.querySelectorAll('.element-item');
+            const positionBtns = document.querySelectorAll('.position-btn');
+            const exportBtn = document.getElementById('export-btn');
+            const editModeBtn = document.getElementById('edit-mode-btn');
+            const previewModeBtn = document.getElementById('preview-mode-btn');
+            
+            let activeElement = null;
+            let isDragging = false;
+            let dragOffset = { x: 0, y: 0 };
+            let isEditMode = true;
+            
+            // Default positions for elements
+            const defaultPositions = {
+                'header': { top: 20, left: 200, width: 400 },
+                'invoice-details': { top: 80, left: 500, width: 250 },
+                'from-address': { top: 150, left: 50, width: 250 },
+                'to-address': { top: 150, left: 350, width: 250 },
+                'items-table': { top: 300, left: 50, width: 600 },
+                'company-logo': { top: 20, left: 50, width: 150 },
+                'total-summary': { top: 500, left: 450, width: 200 },
+                'footer': { top: 650, left: 200, width: 400 }
+            };
+            
+            // Initialize with default layout
+            initializeInvoice();
+            
+            // Double-click to add elements from sidebar
+            elementItems.forEach(item => {
+                item.addEventListener('dblclick', function() {
+                    const elementType = item.dataset.type;
+                    addElementToInvoice(elementType, 50, 50);
+                    updateSidebarItems();
+                });
+            });
+            
+            // Position buttons functionality
+            positionBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    if (!activeElement || !isEditMode) return;
+                    
+                    // Remove active class from all buttons
+                    positionBtns.forEach(b => b.classList.remove('active'));
+                    // Add active class to clicked button
+                    btn.classList.add('active');
+                    
+                    const position = btn.dataset.position;
+                    positionElement(activeElement, position);
+                });
+            });
+            
+            // Button event listeners
+            exportBtn.addEventListener('click', function() {
+                alert('Exporting invoice as PDF...');
+                // In a real application, you would generate a PDF
+            });
+            
+            // Mode toggle functionality
+            editModeBtn.addEventListener('click', function() {
+                if (isEditMode) return;
+                setEditMode(true);
+            });
+            
+            previewModeBtn.addEventListener('click', function() {
+                if (!isEditMode) return;
+                setEditMode(false);
+            });
+            
+            function setEditMode(edit) {
+                isEditMode = edit;
+                
+                if (edit) {
+                    document.body.classList.remove('preview-mode');
+                    editModeBtn.classList.add('active');
+                    previewModeBtn.classList.remove('active');
+                    
+                    // Make all elements draggable again
+                    document.querySelectorAll('.invoice-element').forEach(element => {
+                        makeElementDraggable(element);
+                    });
+                } else {
+                    document.body.classList.add('preview-mode');
+                    editModeBtn.classList.remove('active');
+                    previewModeBtn.classList.add('active');
+                    
+                    // Remove dragging capability
+                    document.querySelectorAll('.invoice-element').forEach(element => {
+                        element.style.cursor = 'default';
+                        element.removeEventListener('mousedown', element.dragHandler);
+                    });
+                    
+                    // Remove active element
+                    if (activeElement) {
+                        activeElement.classList.remove('active');
+                        activeElement = null;
+                    }
+                }
+            }
+            
+            function initializeInvoice() {
+                // Clear the invoice preview
+                invoicePreview.innerHTML = '<h2>Invoice Preview</h2>';
+                
+                // Add all elements with default positions
+                Object.keys(defaultPositions).forEach(type => {
+                    addElementToInvoice(type, defaultPositions[type].left, defaultPositions[type].top, defaultPositions[type].width);
+                });
+                
+                updateSidebarItems();
+            }
+            
+            function updateSidebarItems() {
+                // Get all existing element types in the invoice
+                const existingElements = Array.from(document.querySelectorAll('.invoice-element')).map(el => el.dataset.type);
+                
+                // Update sidebar items
+                elementItems.forEach(item => {
+                    const type = item.dataset.type;
+                    if (existingElements.includes(type)) {
+                        item.classList.add('disabled');
+                    } else {
+                        item.classList.remove('disabled');
+                    }
+                });
+            }
+            
+            function addElementToInvoice(type, left, top, width = 200) {
+                // Check if element already exists
+                if (document.querySelector(`.invoice-element[data-type="${type}"]`)) {
+                    return;
+                }
+                
+                const element = document.createElement('div');
+                element.className = 'invoice-element';
+                element.dataset.type = type;
+                element.style.left = left + 'px';
+                element.style.top = top + 'px';
+                element.style.width = width + 'px';
+                
+                // Add controls
+                const controls = document.createElement('div');
+                controls.className = 'element-controls';
+                controls.innerHTML = `
+                    <div class="control-btn delete-btn">Delete</div>
+                `;
+                element.appendChild(controls);
+                
+                // Add content based on type
+                let content = '';
+                switch(type) {
+                    case 'header':
+                        content = '<div class="invoice-header">INVOICE</div>';
+                        break;
+                    case 'invoice-details':
+                        content = `
+                            <div class="invoice-details">
+                                <p><strong>Invoice #:</strong> INV-001</p>
+                                <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
+                                <p><strong>Due Date:</strong> ${new Date(Date.now() + 30*24*60*60*1000).toLocaleDateString()}</p>
+                            </div>
+                        `;
+                        break;
+                    case 'from-address':
+                        content = `
+                            <div class="from-address">
+                                <h3>From:</h3>
+                                <p>Your Company Name</p>
+                                <p>123 Business Street</p>
+                                <p>City, State 12345</p>
+                                <p>Email: info@company.com</p>
+                                <p>Phone: (123) 456-7890</p>
+                            </div>
+                        `;
+                        break;
+                    case 'to-address':
+                        content = `
+                            <div class="to-address">
+                                <h3>To:</h3>
+                                <p>Client Company Name</p>
+                                <p>456 Client Avenue</p>
+                                <p>City, State 67890</p>
+                                <p>Email: contact@client.com</p>
+                                <p>Phone: (987) 654-3210</p>
+                            </div>
+                        `;
+                        break;
+                    case 'items-table':
+                        content = `
+                            <table class="items-table">
+                                <thead>
+                                    <tr>
+                                        <th>Description</th>
+                                        <th>Quantity</th>
+                                        <th>Price</th>
+                                        <th>Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Product 1</td>
+                                        <td>2</td>
+                                        <td>$50.00</td>
+                                        <td>$100.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Product 2</td>
+                                        <td>1</td>
+                                        <td>$75.00</td>
+                                        <td>$75.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Service 1</td>
+                                        <td>3</td>
+                                        <td>$30.00</td>
+                                        <td>$90.00</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        `;
+                        break;
+                    case 'company-logo':
+                        content = `
+                            <div class="company-logo">
+                                <div class="logo-placeholder">Company Logo</div>
+                            </div>
+                        `;
+                        break;
+                    case 'total-summary':
+                        content = `
+                            <div class="total-summary">
+                                <p>Subtotal: $265.00</p>
+                                <p>Tax (10%): $26.50</p>
+                                <p>Total: $291.50</p>
+                            </div>
+                        `;
+                        break;
+                    case 'footer':
+                        content = `
+                            <div class="footer">
+                                <p>Thank you for your business!</p>
+                                <p>Terms & Conditions: Payment due within 30 days</p>
+                            </div>
+                        `;
+                        break;
+                }
+                
+                element.innerHTML += content;
+                invoicePreview.appendChild(element);
+                
+                // Add event listeners for the new element
+                makeElementDraggable(element);
+                
+                // Add delete functionality
+                const deleteBtn = element.querySelector('.delete-btn');
+                deleteBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    element.remove();
+                    updateSidebarItems();
+                });
+                
+                // Update sidebar items
+                updateSidebarItems();
+            }
+            
+            function makeElementDraggable(element) {
+                // Store the handler so we can remove it later
+                element.dragHandler = function(e) {
+                    if (e.target.classList.contains('control-btn') || !isEditMode) return;
+                    
+                    // Set as active element
+                    setActiveElement(element);
+                    
+                    isDragging = true;
+                    dragOffset.x = e.clientX - element.getBoundingClientRect().left;
+                    dragOffset.y = e.clientY - element.getBoundingClientRect().top;
+                    
+                    document.addEventListener('mousemove', onMouseMove);
+                    document.addEventListener('mouseup', onMouseUp);
+                };
+                
+                element.addEventListener('mousedown', element.dragHandler);
+                
+                element.addEventListener('click', function(e) {
+                    if (e.target.classList.contains('control-btn') || !isEditMode) return;
+                    setActiveElement(element);
+                });
+            }
+            
+            function setActiveElement(element) {
+                if (!isEditMode) return;
+                
+                // Remove active class from all elements
+                document.querySelectorAll('.invoice-element').forEach(el => {
+                    el.classList.remove('active');
+                });
+                
+                // Add active class to clicked element
+                element.classList.add('active');
+                activeElement = element;
+            }
+            
+            function onMouseMove(e) {
+                if (!isDragging || !activeElement || !isEditMode) return;
+                
+                const previewRect = invoicePreview.getBoundingClientRect();
+                let newLeft = e.clientX - previewRect.left - dragOffset.x;
+                let newTop = e.clientY - previewRect.top - dragOffset.y;
+                
+                // Constrain to preview area
+                newLeft = Math.max(0, Math.min(newLeft, previewRect.width - activeElement.offsetWidth));
+                newTop = Math.max(0, Math.min(newTop, previewRect.height - activeElement.offsetHeight));
+                
+                activeElement.style.left = newLeft + 'px';
+                activeElement.style.top = newTop + 'px';
+            }
+            
+            function onMouseUp() {
+                isDragging = false;
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+            }
+            
+            function positionElement(element, position) {
+                const previewRect = invoicePreview.getBoundingClientRect();
+                const elementWidth = element.offsetWidth;
+                const elementHeight = element.offsetHeight;
+                
+                let newLeft, newTop;
+                
+                switch(position) {
+                    case 'top-left':
+                        newLeft = 20;
+                        newTop = 20;
+                        break;
+                    case 'top-center':
+                        newLeft = (previewRect.width - elementWidth) / 2;
+                        newTop = 20;
+                        break;
+                    case 'top-right':
+                        newLeft = previewRect.width - elementWidth - 20;
+                        newTop = 20;
+                        break;
+                    case 'middle-left':
+                        newLeft = 20;
+                        newTop = (previewRect.height - elementHeight) / 2;
+                        break;
+                    case 'middle-center':
+                        newLeft = (previewRect.width - elementWidth) / 2;
+                        newTop = (previewRect.height - elementHeight) / 2;
+                        break;
+                    case 'middle-right':
+                        newLeft = previewRect.width - elementWidth - 20;
+                        newTop = (previewRect.height - elementHeight) / 2;
+                        break;
+                    case 'bottom-left':
+                        newLeft = 20;
+                        newTop = previewRect.height - elementHeight - 20;
+                        break;
+                    case 'bottom-center':
+                        newLeft = (previewRect.width - elementWidth) / 2;
+                        newTop = previewRect.height - elementHeight - 20;
+                        break;
+                    case 'bottom-right':
+                        newLeft = previewRect.width - elementWidth - 20;
+                        newTop = previewRect.height - elementHeight - 20;
+                        break;
+                }
+                
+                element.style.left = newLeft + 'px';
+                element.style.top = newTop + 'px';
+            }
+        });
+    </script>
+</body>
+</html>

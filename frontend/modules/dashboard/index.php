@@ -7,46 +7,71 @@ $customerCount = $count['customer'];
 $invoiceCount = $count['invoice'];
 $productCount = $count['product'];
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Dashboard</title>
-  <link rel="stylesheet" href="dashboard.css">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-</head>
-<body>
-
-  <!-- 🌀 Floating Background Circles -->
-  <div class="bg-shape shape1"></div>
-  <div class="bg-shape shape2"></div>
-  <div class="bg-shape shape3"></div>
-  <div class="bg-shape shape4"></div>
-
-  <div class="dashboard-wrapper">
-    <h1 class="dashboard-title">📊 Dashboard Overview</h1>
-
-    <div class="dashboard-container">
-      <div class="dashboard-card card-customers">
-        <div class="icon">👥</div>
-        <h2><?php echo $customerCount; ?></h2>
-        <p>Customers</p>
-      </div>
-
-      <div class="dashboard-card card-invoices">
-        <div class="icon">🧾</div>
-        <h2><?php echo $invoiceCount; ?></h2>
-        <p>Invoices</p>
-      </div>
-
-      <div class="dashboard-card card-transactions">
-        <div class="icon">💸</div>
-        <h2><?php echo $productCount; ?></h2>
-        <p>Products</p>
-      </div>
-    </div>
-  </div>
-
-</div>
-</body>
+<html>
+  <head>
+  <link rel="stylesheet" href="assets/css/dashboard.css">
+  </head>
 </html>
+  <div class="dashboard-layout">     
+          <div class="content-header">
+            <h1 class="dashboard-title">
+              <i class="fas fa-chart-line"></i>
+              Dashboard Overview
+            </h1>
+            <div class="header-actions">
+              <button data-link="transactions/transaction_add" class="btn btn-primary">
+                <i class="fas fa-plus"></i>
+                New Invoice
+              </button>
+            </div>
+          </div>
+          
+          <!-- Stats Cards -->
+          <div class="stats-container">
+            <div class="stats-card card-customers">
+              <div class="card-icon">
+                <i class="fas fa-users"></i>
+              </div>
+              <div class="card-content">
+                <h3><?php echo $customerCount; ?></h3>
+                <p>Total Customers</p>
+                <span class="card-trend positive">
+                  <i class="fas fa-arrow-up"></i>
+                  12% increase
+                </span>
+              </div>
+            </div>
+            
+            <div class="stats-card card-invoices">
+              <div class="card-icon">
+                <i class="fas fa-file-invoice"></i>
+              </div>
+              <div class="card-content">
+                <h3><?php echo $invoiceCount; ?></h3>
+                <p>Total Invoices</p>
+                <span class="card-trend positive">
+                  <i class="fas fa-arrow-up"></i>
+                  8% increase
+                </span>
+              </div>
+            </div>
+            
+            <div class="stats-card card-products">
+              <div class="card-icon">
+                <i class="fas fa-boxes"></i>
+              </div>
+              <div class="card-content">
+                <h3><?php echo $productCount; ?></h3>
+                <p>Total Products</p>
+                <span class="card-trend positive">
+                  <i class="fas fa-arrow-up"></i>
+                  5% increase
+                </span>
+              </div>
+            </div>
+            
+           
+          </div>
+          
+        </div>
+  </div>

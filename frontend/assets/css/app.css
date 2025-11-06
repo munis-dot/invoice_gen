@@ -1,0 +1,13 @@
+.app {
+    display: flex;
+    max-width: 100%;
+    overflow: hidden;
+    font-family: 'Poppins', sans-serif;
+    max-height: calc(100vh - 87px);
+}
+
+.main-content {
+    width: calc(100% - 260px);
+    overflow: hidden;
+    overflow-y: auto;
+}

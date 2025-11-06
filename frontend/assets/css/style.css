@@ -10,7 +10,7 @@ body {
     width: 100%;
 }
 
-.sidebar {
+/* .sidebar2 {
     background: #222;
     color: #fff;
     width: 200px;
@@ -18,12 +18,12 @@ body {
     height: 100vh;
 }
 
-.sidebar a {
+.sidebar2 a {
     color: #fff;
     display: block;
     margin-bottom: 10px;
     text-decoration: none;
-}
+} */
 
 .content {
     flex: 1;
