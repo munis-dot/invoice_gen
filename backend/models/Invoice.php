@@ -188,8 +188,8 @@ class Invoice
     public function createInvoice(array $data)
     {
         $stmt = $this->pdo->prepare("
-            INSERT INTO invoices (invoice_number, customer_id, date, subtotal, discount, tax, total, created_by, pdf_path, company_logo, email, address)
-            VALUES (:invoice_number, :customer_id, :date, :subtotal, :discount, :tax, :total, :created_by, :pdf_path, :company_logo, :email, :address)
+            INSERT INTO invoices (invoice_number, customer_id, date, subtotal, discount, tax, total, created_by, pdf_path, company_logo, email, address, payment_method)
+            VALUES (:invoice_number, :customer_id, :date, :subtotal, :discount, :tax, :total, :created_by, :pdf_path, :company_logo, :email, :address, :payment_method)
         ");
         $stmt->execute([
             ':invoice_number' => $data['invoice_number'],
@@ -204,6 +204,7 @@ class Invoice
             ':company_logo' => $data['company_logo'] ?? null,
             ':email' => $data['email'] ?? null,
             ':address' => $data['address'] ?? null,
+            ':payment_method' => $data['payment_method'] ?? 'cash'
 
         ]);
         return $this->pdo->lastInsertId();

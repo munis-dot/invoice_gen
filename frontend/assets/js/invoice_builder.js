@@ -300,6 +300,7 @@ function initUI() {
                             <div class="total-summary">
                                 <p>Subtotal: $${invoiceData ? invoiceData.subtotal : '265.00'}</p>
                                 <p>Tax: $${invoiceData ? invoiceData.tax : '26.50'}</p>
+                                ${invoiceData?.['discount'] > 0 ? '<p>Discount: $' + invoiceData.discount + '</p>' : ''}
                                 <p>Total: $${invoiceData ? invoiceData.total : '291.50'}</p>
                             </div>
                         `;

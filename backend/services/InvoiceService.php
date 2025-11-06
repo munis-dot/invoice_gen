@@ -76,134 +76,226 @@ class InvoiceService
     // ---------------- Algorithm ----------------
 function generateProductMix(array $products, float $targetAmount, bool $enableDiscount = true): array|false
 {
-    $maxAllowedOvershoot = min($targetAmount * 0.1, 200.0);
-    $maxAllowedTotal     = $targetAmount + $maxAllowedOvershoot;
+    error_log("[generateProductMix] TIME COMPLEXITY: O(n log n) [sort] + O(n * target) [DP]");
 
-    // Sort products by price descending
-    $sorted_products = $products;
-    usort($sorted_products, function ($a, $b) {
-        return $b['price'] <=> $a['price'];
-    });
-
-    $n = count($sorted_products);
-    $unit_totals = [];
-    $max_qtys    = [];
-
-    foreach ($sorted_products as $product) {
-        $price   = (float)$product['price'];
-        $taxRate = (float)($product['tax_rate'] ?? 0);
-        $type    = $product['product_type'] ?? 'physical';
-        $stock   = (int)($product['stock'] ?? 1);
-
-        $per_unit_total = $price * (1 + $taxRate / 100);
-        $unit_totals[]  = $per_unit_total;
-        $max_qtys[]     = $type === 'digital' ? 1 : max(0, $stock);
+    if (empty($products) || $targetAmount <= 0) {
+        return [
+            'error' => 'Invalid input: No products or target amount <= 0',
+            'debug' => ['products_count' => count($products), 'target_amount' => $targetAmount]
+        ];
     }
 
-    // Precompute max_add
-    $max_add = array_fill(0, $n + 1, 0.0);
-    for ($i = $n - 1; $i >= 0; $i--) {
-        $max_add[$i] = $max_add[$i + 1] + $max_qtys[$i] * $unit_totals[$i];
+    // === 1. PREPARE ITEMS ===
+    $items = [];
+    foreach ($products as $p) {
+        $price = (float)$p['price'];
+        if ($price <= 0) continue;
+
+        $taxRate = (float)($p['tax_rate'] ?? 0);
+        $stock   = (int)($p['stock'] ?? 1);
+        $type    = $p['product_type'] ?? 'physical';
+        $maxQty  = $type === 'digital' ? 1 : max(0, $stock);
+        if ($maxQty < 1) continue;
+
+        $unitTotal = $price * (1 + $taxRate / 100);
+        $items[] = [
+            'id'         => $p['id'],
+            'name'       => $p['name'],
+            'price'      => $price,
+            'tax_rate'   => $taxRate,
+            'unit_total' => $unitTotal,
+            'max_qty'    => $maxQty,
+        ];
     }
 
-    $best_total = PHP_FLOAT_MAX;
-    $best_qtys  = null;
-    $qtys       = array_fill(0, $n, 0);
+    if (empty($items)) {
+        return ['error' => 'No valid products after filtering', 'debug' => ['target_amount' => $targetAmount]];
+    }
 
-    $recurse = function (int $idx, float $curr_total, array &$qtys) use (
-        &$best_total, &$best_qtys, $n, $unit_totals, $max_qtys, $max_add,
-        $targetAmount, $maxAllowedTotal, $enableDiscount, &$recurse
-    ): void {
-        if ($idx == $n) {
-            // KEY CHANGE: When discount=true, require total > target
-            $isValid = $curr_total <= $maxAllowedTotal && $curr_total < $best_total;
-            if ($enableDiscount) {
-                $isValid = $isValid && ($curr_total > $targetAmount);
-            } else {
-                $isValid = $isValid && (abs($curr_total - $targetAmount) < 1e-9);
+    // === 2. DISCOUNT DISABLED → EXACT MATCH WITH QUANTITY SUPPORT ===
+    if (!$enableDiscount) {
+        $targetCents = (int)round($targetAmount * 100);
+        $dp = array_fill(0, $targetCents + 1, false);
+        $dp[0] = true;
+        $prev = []; // [cents => ['item' => $item, 'qty' => int]]
+
+        foreach ($items as $item) {
+            $itemCents = (int)round($item['unit_total'] * 100);
+            $maxQty = $item['max_qty'];
+
+            // Try adding 1 to maxQty of this item
+            for ($qty = 1; $qty <= $maxQty; $qty++) {
+                $totalCents = $itemCents * $qty;
+                if ($totalCents > $targetCents) break;
+
+                for ($j = $targetCents; $j >= $totalCents; $j--) {
+                    if ($dp[$j - $totalCents]) {
+                        $dp[$j] = true;
+                        $prev[$j] = ['item' => $item, 'qty' => $qty];
+                    }
+                }
+            }
+        }
+
+        // Reconstruct solution
+        if ($dp[$targetCents]) {
+            $selected = [];
+            $current = $targetCents;
+
+            while ($current > 0) {
+                $entry = $prev[$current];
+                $item = $entry['item'];
+                $qty  = $entry['qty'];
+
+                $subTotal = $item['price'] * $qty;
+                $tax      = $subTotal * ($item['tax_rate'] / 100);
+                $lineTotal = $subTotal + $tax;
+
+                $selected[] = [
+                    'id'        => $item['id'],
+                    'name'      => $item['name'],
+                    'qty'       => $qty,
+                    'price'     => round($item['price'], 2),
+                    'tax_rate'  => round($item['tax_rate'], 2),
+                    'sub_total' => round($subTotal, 2),
+                    'tax'       => round($tax, 2),
+                    'discount'  => 0.0,
+                    'total'     => round($lineTotal, 2),
+                ];
+
+                $current -= (int)round($lineTotal * 100);
             }
 
-            if ($isValid) {
-                $best_total = $curr_total;
-                $best_qtys  = $qtys;
-            }
-            return;
+            $subtotal = array_sum(array_column($selected, 'sub_total'));
+            $tax      = array_sum(array_column($selected, 'tax'));
+            $total    = $subtotal + $tax;
+
+            $output = [
+                'products' => $selected,
+                'discount_percent' => 0.0,
+                'summary' => [
+                    'sub_total' => round($subtotal, 2),
+                    'tax'       => round($tax, 2),
+                    'discount'  => 0.0,
+                    'total'     => round($total, 2),
+                    'target'    => round($targetAmount, 2)
+                ]
+            ];
+
+            error_log("[generateProductMix] EXACT MATCH (qty support) | items: " . count($selected));
+            return $output;
+        } else {
+            return [
+                'error' => 'No combination (with quantity) matches target (discount disabled)',
+                'debug' => ['target_amount' => $targetAmount, 'enable_discount' => false]
+            ];
         }
-
-        if ($curr_total >= $best_total) return;
-        if ($curr_total + $max_add[$idx] <= $targetAmount) return;
-
-        $per_unit = $unit_totals[$idx];
-        if ($per_unit <= 0) {
-            $qtys[$idx] = 0;
-            $recurse($idx + 1, $curr_total, $qtys);
-            return;
-        }
-
-        $max_qty_here = min($max_qtys[$idx], floor(($maxAllowedTotal - $curr_total) / $per_unit));
-        for ($qty = 0; $qty <= $max_qty_here; $qty++) {
-            $new_total = $curr_total + $qty * $per_unit;
-            if ($new_total > $maxAllowedTotal) break;
-
-            $qtys[$idx] = $qty;
-            $recurse($idx + 1, $new_total, $qtys);
-        }
-    };
-
-    $recurse(0, 0.0, $qtys);
-
-    if ($best_qtys === null) {
-        return false;
     }
 
-    // Build selected products
-    $selected  = [];
-    $tempTotal = 0.0;
+    // === 3. DISCOUNT ENABLED → GREEDY + 10% OVERSHOOT (unchanged) ===
+    usort($items, fn($a, $b) => $b['unit_total'] <=> $a['unit_total']);
 
-    foreach ($best_qtys as $i => $qty) {
-        if ($qty == 0) continue;
+    $maxOvershoot = $targetAmount * 0.1;
+    $maxAllowed   = $targetAmount + $maxOvershoot;
 
-        $product     = $sorted_products[$i];
-        $price       = (float)$product['price'];
-        $taxRate     = (float)($product['tax_rate'] ?? 0);
-        $subTotal    = $price * $qty;
-        $tax         = $subTotal * ($taxRate / 100);
-        $totalWithTax = $subTotal + $tax;
+    $selected = [];
+    $current  = 0.0;
+
+    foreach ($items as $item) {
+        if ($current >= $maxAllowed) break;
+
+        $affordable = (int)floor(($maxAllowed - $current) / $item['unit_total']);
+        $qty = min($affordable, $item['max_qty']);
+        $qty = max(1, $qty);
+
+        if ($current + $item['unit_total'] > $maxAllowed) {
+            $qty = (int)floor(($maxAllowed - $current) / $item['unit_total']);
+            if ($qty < 1) continue;
+        }
+
+        $lineSubtotal = $item['price'] * $qty;
+        $lineTax      = $lineSubtotal * ($item['tax_rate'] / 100);
+        $lineTotal    = $lineSubtotal + $lineTax;
 
         $selected[] = [
-            'id'         => $product['id'],
-            'name'       => $product['name'],
-            'qty'        => $qty,
-            'price'      => round($price, 2),
-            'tax_rate'   => round($taxRate, 2),
-            'sub_total'  => round($subTotal, 2),
-            'tax'        => round($tax, 2),
-            'discount'   => 0.0,
-            'total'      => round($totalWithTax, 2)
+            'id'        => $item['id'],
+            'name'      => $item['name'],
+            'qty'       => $qty,
+            'price'     => round($item['price'], 2),
+            'tax_rate'  => round($item['tax_rate'], 2),
+            'sub_total' => round($lineSubtotal, 2),
+            'tax'       => round($lineTax, 2),
+            'discount'  => 0.0,
+            'total'     => round($lineTotal, 2),
         ];
-        $tempTotal += $totalWithTax;
+
+        $current += $lineTotal;
     }
 
-    // Apply discount (only if enabled and total > target)
-    $appliedDiscount = 0.0;
+    if ($current < $targetAmount && $current < $maxAllowed) {
+        foreach (array_reverse($items) as $item) {
+            if ($current + $item['unit_total'] <= $maxAllowed) {
+                $lineSubtotal = $item['price'];
+                $lineTax      = $lineSubtotal * ($item['tax_rate'] / 100);
+                $lineTotal    = $lineSubtotal + $lineTax;
+
+                $selected[] = [
+                    'id'        => $item['id'],
+                    'name'      => $item['name'],
+                    'qty'       => 1,
+                    'price'     => round($item['price'], 2),
+                    'tax_rate'  => round($item['tax_rate'], 2),
+                    'sub_total' => round($lineSubtotal, 2),
+                    'tax'       => round($lineTax, 2),
+                    'discount'  => 0.0,
+                    'total'     => round($lineTotal, 2),
+                ];
+                $current += $lineTotal;
+                break;
+            }
+        }
+    }
+
+    $subtotal = array_sum(array_column($selected, 'sub_total'));
+    $tax      = array_sum(array_column($selected, 'tax'));
+    $total    = $subtotal + $tax;
+
+    $discount = 0.0;
     $discountPercent = 0.0;
 
-    if ($enableDiscount && $tempTotal > $targetAmount) {
-        $appliedDiscount = $tempTotal - $targetAmount;
-        $discountPercent = ($appliedDiscount / $tempTotal) * 100;
-        $tempTotal       = $targetAmount;
+    if ($total > $targetAmount) {
+        $discount = round($total - $targetAmount, 2);
+        $discountPercent = $total > 0 ? round(($discount / $total) * 100, 4) : 0;
+        $total = round($targetAmount, 2);
     }
 
-    return [
-        'products'         => $selected,
-        'discount_percent' => round($discountPercent, 4),
-        'summary'          => [
-            'sub_total' => round(array_sum(array_column($selected, 'sub_total')), 2),
-            'tax'       => round(array_sum(array_column($selected, 'tax')), 2),
-            'discount'  => round($appliedDiscount, 2),
-            'total'     => round($tempTotal, 2),
+    $output = [
+        'products' => $selected,
+        'discount_percent' => $discountPercent,
+        'summary' => [
+            'sub_total' => round($subtotal, 2),
+            'tax'       => round($tax, 2),
+            'discount'  => $discount,
+            'total'     => $total,
             'target'    => round($targetAmount, 2)
         ]
     ];
+
+    if (abs($total - $targetAmount) > 0.01) {
+        $output['error'] = 'Failed to match target amount';
+        $output['debug'] = [
+            'calculated_total' => $total,
+            'target_amount'    => $targetAmount,
+            'difference'       => round($total - $targetAmount, 2),
+            'enable_discount'  => true,
+            'items_selected'   => count($selected),
+            'max_allowed'      => round($maxAllowed, 2)
+        ];
+    }
+
+    error_log("[generateProductMix] RETURN " . (isset($output['error']) ? 'WITH ERROR' : 'SUCCESS') . " | total: $total | target: $targetAmount");
+
+    return $output;
 }
+
 }
