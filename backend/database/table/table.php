@@ -74,6 +74,16 @@ try {
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     ");
 
+    $pdo->exec("
+    CREATE TABLE IF NOT EXISTS invoice_templates (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        layout_json LONGTEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    ");
+
     // 5️⃣ invoice_items table
     $pdo->exec("
         CREATE TABLE IF NOT EXISTS invoice_items (
@@ -108,10 +118,10 @@ try {
         $pdo->commit();
     }
 
-    
+
 
     // echo "✅ All tables created successfully with relationships.";
-    
+
 
 
 } catch (PDOException $e) {

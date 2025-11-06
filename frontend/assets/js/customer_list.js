@@ -23,12 +23,18 @@ export default class CustomerList {
                     field: 'actions',
                     title: 'Actions',
                     render: (_, item) => `
-                       <div class="btn-group">
-                            <button onclick="loadPage('customers/customer_view', { id: ${item.id} })" class="btn btn-info btn-sm">View</button>
-                            <button onclick="loadPage('customers/customer_add', { id: ${item.id} })" class="btn btn-primary btn-sm">Edit</button>
-                            <button class="btn btn-danger btn-sm" onclick="deleteCustomer(${item.id})">Delete</button>
-                        </div>
-                    `
+        <div class="action-buttons">
+            <button onclick="loadPage('customers/customer_view', { id: ${item.id} })" class="btn-action btn-view" title="View Customer">
+                <i class="fas fa-eye"></i>
+            </button>
+            <button onclick="loadPage('customers/customer_add', { id: ${item.id} })" class="btn-action btn-edit" title="Edit Customer">
+                <i class="fas fa-edit"></i>
+            </button>
+            <button class="btn-action btn-delete" onclick="deleteCustomer(${item.id})" title="Delete Customer">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    `
                 }
             ]
         });
@@ -41,7 +47,7 @@ export default class CustomerList {
         if (!confirm('Are you sure you want to delete this customer?')) {
             return;
         }
-        
+
         try {
             const payload = {
                 url: `/invoice_gen/backend/public/api/customers?id=${id}`,
@@ -54,7 +60,7 @@ export default class CustomerList {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-            
+
             const result = await response.json();
             if (result && !result.error) {
                 // Refresh the list using the list handler

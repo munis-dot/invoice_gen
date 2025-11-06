@@ -28,7 +28,7 @@ if ($isEdit) {
       <div class="form-card">
         <h2><?= htmlspecialchars($pageTitle) ?></h2>
 
-        <form id="<?= $config['formId'] ?>" enctype="multipart/form-data" validate>
+        <form id="<?= $config['formId'] ?>" class="manageForm" enctype="multipart/form-data" validate>
           <?php if ($isEdit): ?>
             <input type="hidden" name="id" value="<?= htmlspecialchars($_GET['id']) ?>">
             <input type="hidden" name="image" value="<?= htmlspecialchars($existing['image_url'] ?? '') ?>">
@@ -104,7 +104,7 @@ if ($isEdit) {
           <hr class="divider">
 
           <h3>Bulk Upload (CSV / Excel)</h3>
-          <form id="<?= $config['bulkUploadFormId'] ?>" enctype="multipart/form-data">
+          <form id="<?= $config['bulkUploadFormId'] ?>" class="uploadForm" enctype="multipart/form-data">
             <input type="file" name="file" accept=".csv,.xlsx" required class="form-input">
             <button type="submit" class="btn upload">Upload</button>
           </form>

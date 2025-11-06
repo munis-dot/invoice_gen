@@ -40,15 +40,19 @@ export default class TransactionList {
                     render: (value) => value ? value.charAt(0).toUpperCase() + value.slice(1) : 'N/A'
                 },
                 {
-                    field: 'actions',
-                    title: 'Actions',
-                    render: (_, item) => `
-                        <div class="btn-group">
-                            <button data-link="transactions/transaction_view?id=${item.id}" class="btn btn-info btn-sm">View</button>
-                            <button class="btn btn-danger btn-sm" onclick="deleteTransaction(${item.id})">Delete</button>
-                        </div>
-                    `
-                }
+    field: 'actions',
+    title: 'Actions',
+    render: (_, item) => `
+        <div class="action-buttons">
+            <button data-link="transactions/transaction_view?id=${item.id}" class="btn-action btn-view" title="View Transaction">
+                <i class="fas fa-eye"></i>
+            </button>
+            <button class="btn-action btn-delete" onclick="deleteTransaction(${item.id})" title="Delete Transaction">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    `
+}
             ]
         });
 

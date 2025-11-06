@@ -14,7 +14,7 @@ class InvoiceService
     public function processInvoice(array $payload)
     {
         $customerId = $payload['customerId'];
-        
+
         // Validate if customer exists
         require_once __DIR__ . '/../models/Customer.php';
         $customer = Customer::find($customerId);
@@ -38,7 +38,7 @@ class InvoiceService
         // 2️⃣ Apply algorithm to select products & adjust discounts
         $productMix = $this->generateProductMix($products, $targetAmount, $discountEnabled);
         // 3️⃣ Save invoice
-        if(!$productMix){
+        if (!$productMix) {
             throw new Exception("Unable to generate invoice for the given amount.");
         }
         $invoiceId = $this->invoiceModel->createInvoice([
@@ -75,7 +75,7 @@ class InvoiceService
 
     // ---------------- Algorithm ----------------
 
-// function generateProductMix(array $products, float $targetAmount, bool $enableDiscount = true): array|false
+    // function generateProductMix(array $products, float $targetAmount, bool $enableDiscount = true): array|false
 // {
 //     $max_attempts = 50;
 //     $selected = [];
@@ -83,39 +83,39 @@ class InvoiceService
 //     $discountPercent = 0.0;
 //     $appliedDiscount = 0.0;
 
-//     $maxAllowedOvershoot = min($targetAmount * 0.1, 200.0);
+    //     $maxAllowedOvershoot = min($targetAmount * 0.1, 200.0);
 //     $maxAllowedTotal = $targetAmount + $maxAllowedOvershoot;
 
-//     if ($enableDiscount) {
+    //     if ($enableDiscount) {
 //         // Mode 1: Enable discount - aim for >= target, <= maxAllowedTotal, pick minimal overshoot
 //         $bestOvershoot = PHP_FLOAT_MAX;
 //         $bestSelected = [];
 //         $bestTotal = 0.0;
 
-//         for ($attempts = 0; $attempts < $max_attempts; $attempts++) {
+    //         for ($attempts = 0; $attempts < $max_attempts; $attempts++) {
 //             $tempSelected = [];
 //             $tempTotal = 0.0;
 //             shuffle($products);
 //             foreach ($products as $product) {
 //                 if ($tempTotal >= $targetAmount) break;
 
-//                 $price = (float)$product['price'];
+    //                 $price = (float)$product['price'];
 //                 $taxRate = (float)($product['tax_rate'] ?? 0);
 //                 $type = $product['product_type'] ?? 'physical';
 //                 $stock = (int)($product['stock'] ?? 1);
 
-//                 // Physical: random quantity 1 - stock, Digital: only 1
+    //                 // Physical: random quantity 1 - stock, Digital: only 1
 //                 $maxQty = $type === 'physical' ? max(1, $stock) : 1;
 //                 $qty = $type === 'physical' ? rand(1, $maxQty) : 1;
 
-//                 $subTotal = $price * $qty;
+    //                 $subTotal = $price * $qty;
 //                 $tax = $subTotal * ($taxRate / 100);
 //                 $totalWithTax = $subTotal + $tax;
 
-//                 // Skip if exceeds max allowed
+    //                 // Skip if exceeds max allowed
 //                 if ($tempTotal + $totalWithTax > $maxAllowedTotal) continue;
 
-//                 $tempSelected[] = [
+    //                 $tempSelected[] = [
 //                     'id' => $product['id'],
 //                     'name' => $product['name'],
 //                     'type' => $type,
@@ -128,10 +128,10 @@ class InvoiceService
 //                     'total' => round($totalWithTax, 2)
 //                 ];
 
-//                 $tempTotal += $totalWithTax;
+    //                 $tempTotal += $totalWithTax;
 //             }
 
-//             $overshoot = $tempTotal - $targetAmount;
+    //             $overshoot = $tempTotal - $targetAmount;
 //             if ($overshoot >= 0 && $tempTotal <= $maxAllowedTotal && $overshoot < $bestOvershoot) {
 //                 $bestOvershoot = $overshoot;
 //                 $bestSelected = $tempSelected;
@@ -139,18 +139,18 @@ class InvoiceService
 //             }
 //         }
 
-//         if (empty($bestSelected)) {
+    //         if (empty($bestSelected)) {
 //             return false;
 //         }
 
-//         $selected = $bestSelected;
+    //         $selected = $bestSelected;
 //         $total = $bestTotal;
 
-//         // Apply whole order discount to match targetAmount
+    //         // Apply whole order discount to match targetAmount
 //         $actualTotal = $total;
 //         $discountNeeded = $actualTotal - $targetAmount;
 
-//         if ($discountNeeded > 0 && $actualTotal > 0) {
+    //         if ($discountNeeded > 0 && $actualTotal > 0) {
 //             $appliedDiscount = $discountNeeded;
 //             $discountPercent = ($appliedDiscount / $actualTotal) * 100;
 //         }
@@ -160,30 +160,30 @@ class InvoiceService
 //         $bestSelected = [];
 //         $bestTotal = 0.0;
 
-//         for ($attempts = 0; $attempts < $max_attempts; $attempts++) {
+    //         for ($attempts = 0; $attempts < $max_attempts; $attempts++) {
 //             $tempSelected = [];
 //             $tempTotal = 0.0;
 //             shuffle($products);
 //             foreach ($products as $product) {
 //                 if ($tempTotal >= $targetAmount) break;
 
-//                 $price = (float)$product['price'];
+    //                 $price = (float)$product['price'];
 //                 $taxRate = (float)($product['tax_rate'] ?? 0);
 //                 $type = $product['product_type'] ?? 'physical';
 //                 $stock = (int)($product['stock'] ?? 1);
 
-//                 // Physical: random quantity 1 - stock, Digital: only 1
+    //                 // Physical: random quantity 1 - stock, Digital: only 1
 //                 $maxQty = $type === 'physical' ? max(1, $stock) : 1;
 //                 $qty = $type === 'physical' ? rand(1, $maxQty) : 1;
 
-//                 $subTotal = $price * $qty;
+    //                 $subTotal = $price * $qty;
 //                 $tax = $subTotal * ($taxRate / 100);
 //                 $totalWithTax = $subTotal + $tax;
 
-//                 // Skip if would exceed max allowed
+    //                 // Skip if would exceed max allowed
 //                 if ($tempTotal + $totalWithTax > $maxAllowedTotal) continue;
 
-//                 $tempSelected[] = [
+    //                 $tempSelected[] = [
 //                     'id' => $product['id'],
 //                     'name' => $product['name'],
 //                     'type' => $type,
@@ -196,10 +196,10 @@ class InvoiceService
 //                     'total' => round($totalWithTax, 2)
 //                 ];
 
-//                 $tempTotal += $totalWithTax;
+    //                 $tempTotal += $totalWithTax;
 //             }
 
-//             $overshoot = $tempTotal - $targetAmount;
+    //             $overshoot = $tempTotal - $targetAmount;
 //             if ($overshoot > 0 && $tempTotal <= $maxAllowedTotal && $overshoot < $bestOvershoot) {
 //                 $bestOvershoot = $overshoot;
 //                 $bestSelected = $tempSelected;
@@ -207,24 +207,24 @@ class InvoiceService
 //             }
 //         }
 
-//         if (empty($bestSelected)) {
+    //         if (empty($bestSelected)) {
 //             return false;
 //         }
 
-//         $selected = $bestSelected;
+    //         $selected = $bestSelected;
 //         $total = $bestTotal;
 //     }
 
-//     $summarySubTotal = array_sum(array_column($selected, 'sub_total'));
+    //     $summarySubTotal = array_sum(array_column($selected, 'sub_total'));
 //     $summaryTax = array_sum(array_column($selected, 'tax'));
 //     $summaryDiscount = round($appliedDiscount, 2);
 //     $summaryTotal = $summarySubTotal + $summaryTax - $summaryDiscount;
 
-//     if ($summaryTotal == 0) {
+    //     if ($summaryTotal == 0) {
 //         return false;
 //     }
 
-//     return [
+    //     return [
 //         'products' => $selected,
 //         'discount_percent' => round($discountPercent, 4),
 //         'summary' => [
@@ -237,124 +237,138 @@ class InvoiceService
 //     ];
 // }
 
-function generateProductMix(array $products, float $targetAmount, bool $enableDiscount = true): array|false
-{
-    $max_attempts = 50; // Retained but not used in optimized version
-    $selected = [];
-    $total = 0.0;
-    $discountPercent = 0.0;
-    $appliedDiscount = 0.0;
+    function generateProductMix(array $products, float $targetAmount, bool $enableDiscount = true): array|false
+    {
+        $maxAllowedOvershoot = min($targetAmount * 0.1, 200.0);
+        $maxAllowedTotal = $targetAmount + $maxAllowedOvershoot;
 
-    $maxAllowedOvershoot = min($targetAmount * 0.1, 200.0);
-    $maxAllowedTotal = $targetAmount + $maxAllowedOvershoot;
+        // Sort products by price descending
+        $sorted_products = $products;
+        usort($sorted_products, function ($a, $b) {
+            return $b['price'] <=> $a['price'];
+        });
 
-    // Sort products by price descending for greedy high-to-low selection
-    usort($products, function($a, $b) {
-        return $b['price'] <=> $a['price'];
-    });
+        $n = count($sorted_products);
+        $unit_totals = [];
+        $max_qtys = [];
 
-    // Single greedy pass: select quantities deterministically to reach >= targetAmount
-    $tempSelected = [];
-    $tempTotal = 0.0;
+        foreach ($sorted_products as $product) {
+            $price = (float) $product['price'];
+            $taxRate = (float) ($product['tax_rate'] ?? 0);
+            $type = $product['product_type'] ?? 'physical';
+            $stock = (int) ($product['stock'] ?? 1);
 
-    foreach ($products as $product) {
-        if ($tempTotal >= $targetAmount) {
-            break;
+            $per_unit_total = $price * (1 + $taxRate / 100);
+            $unit_totals[] = $per_unit_total;
+            $max_qtys[] = $type === 'digital' ? 1 : max(0, $stock);
         }
 
-        $price = (float)$product['price'];
-        $taxRate = (float)($product['tax_rate'] ?? 0);
-        $type = $product['product_type'] ?? 'physical';
-        $stock = (int)($product['stock'] ?? 1);
-
-        // Physical: up to stock, Digital: only 1
-        $maxQty = $type === 'physical' ? max(1, $stock) : 1;
-
-        $perUnitSubTotal = $price;
-        $perUnitTax = $perUnitSubTotal * ($taxRate / 100);
-        $perUnitTotal = $perUnitSubTotal + $perUnitTax;
-
-        // Skip if even 1 unit exceeds max allowed
-        if ($tempTotal + $perUnitTotal > $maxAllowedTotal) {
-            continue;
+        // Precompute max_add
+        $max_add = array_fill(0, $n + 1, 0.0);
+        for ($i = $n - 1; $i >= 0; $i--) {
+            $max_add[$i] = $max_add[$i + 1] + $max_qtys[$i] * $unit_totals[$i];
         }
 
-        $remaining = $targetAmount - $tempTotal;
-        $qtyByTarget = (int) ceil($remaining / $perUnitTotal);
-        $qty = min($maxQty, $qtyByTarget);
+        $best_total = PHP_FLOAT_MAX;
+        $best_qtys = null;
+        $qtys = array_fill(0, $n, 0);
 
-        // Cap by max allowed total
-        $maxQtyByMaxTotal = (int) floor(($maxAllowedTotal - $tempTotal) / $perUnitTotal);
-        $qty = min($qty, $maxQtyByMaxTotal);
+        $recurse = function (int $idx, float $curr_total, array &$qtys) use (&$best_total, &$best_qtys, $n, $unit_totals, $max_qtys, $max_add, $targetAmount, $maxAllowedTotal, $enableDiscount, &$recurse): void {
+            if ($idx == $n) {
+                // KEY CHANGE: When discount=true, require total > target
+                $isValid = $curr_total <= $maxAllowedTotal && $curr_total < $best_total;
+                if ($enableDiscount) {
+                    $isValid = $isValid && ($curr_total > $targetAmount);
+                } else {
+                    $isValid = $isValid && (abs($curr_total - $targetAmount) < 1e-9);
+                }
 
-        if ($qty < 1) {
-            continue;
+                if ($isValid) {
+                    $best_total = $curr_total;
+                    $best_qtys = $qtys;
+                }
+                return;
+            }
+
+            if ($curr_total >= $best_total)
+                return;
+            if ($curr_total + $max_add[$idx] <= $targetAmount)
+                return;
+
+            $per_unit = $unit_totals[$idx];
+            if ($per_unit <= 0) {
+                $qtys[$idx] = 0;
+                $recurse($idx + 1, $curr_total, $qtys);
+                return;
+            }
+
+            $max_qty_here = min($max_qtys[$idx], floor(($maxAllowedTotal - $curr_total) / $per_unit));
+            for ($qty = 0; $qty <= $max_qty_here; $qty++) {
+                $new_total = $curr_total + $qty * $per_unit;
+                if ($new_total > $maxAllowedTotal)
+                    break;
+
+                $qtys[$idx] = $qty;
+                $recurse($idx + 1, $new_total, $qtys);
+            }
+        };
+
+        $recurse(0, 0.0, $qtys);
+
+        if ($best_qtys === null) {
+            return false;
         }
 
-        $subTotal = $price * $qty;
-        $tax = $subTotal * ($taxRate / 100);
-        $totalWithTax = $subTotal + $tax;
+        // Build selected products
+        $selected = [];
+        $tempTotal = 0.0;
 
-        // Double-check against max (due to float rounding)
-        if ($tempTotal + $totalWithTax > $maxAllowedTotal) {
-            continue;
+        foreach ($best_qtys as $i => $qty) {
+            if ($qty == 0)
+                continue;
+
+            $product = $sorted_products[$i];
+            $price = (float) $product['price'];
+            $taxRate = (float) ($product['tax_rate'] ?? 0);
+            $subTotal = $price * $qty;
+            $tax = $subTotal * ($taxRate / 100);
+            $totalWithTax = $subTotal + $tax;
+
+            $selected[] = [
+                'id' => $product['id'],
+                'name' => $product['name'],
+                'qty' => $qty,
+                'price' => round($price, 2),
+                'tax_rate' => round($taxRate, 2),
+                'sub_total' => round($subTotal, 2),
+                'tax' => round($tax, 2),
+                'discount' => 0.0,
+                'total' => round($totalWithTax, 2)
+            ];
+            $tempTotal += $totalWithTax;
         }
 
-        $tempSelected[] = [
-            'id' => $product['id'],
-            'name' => $product['name'],
-            'type' => $type,
-            'qty' => $qty,
-            'price' => round($price, 2),
-            'tax_rate' => round($taxRate, 2),
-            'sub_total' => round($subTotal, 2),
-            'tax' => round($tax, 2),
-            'discount' => 0.0,
-            'total' => round($totalWithTax, 2)
+        // Apply discount (only if enabled and total > target)
+        $appliedDiscount = 0.0;
+        $discountPercent = 0.0;
+
+        if ($enableDiscount && $tempTotal > $targetAmount) {
+            $appliedDiscount = $tempTotal - $targetAmount;
+            $discountPercent = ($appliedDiscount / $tempTotal) * 100;
+            $tempTotal = $targetAmount;
+        }
+
+        return [
+            'products' => $selected,
+            'discount_percent' => round($discountPercent, 4),
+            'summary' => [
+                'sub_total' => round(array_sum(array_column($selected, 'sub_total')), 2),
+                'tax' => round(array_sum(array_column($selected, 'tax')), 2),
+                'discount' => round($appliedDiscount, 2),
+                'total' => round($tempTotal, 2),
+                'target' => round($targetAmount, 2)
+            ],
         ];
-
-        $tempTotal += $totalWithTax;
     }
 
-    // Validate based on mode
-    $isValid = $enableDiscount ? ($tempTotal >= $targetAmount) : ($tempTotal > $targetAmount);
-    if (empty($tempSelected) || !$isValid || $tempTotal > $maxAllowedTotal) {
-        return false;
-    }
-
-    $selected = $tempSelected;
-    $total = $tempTotal;
-
-    // Apply whole order discount only if enabled
-    if ($enableDiscount) {
-        $actualTotal = $total;
-        $discountNeeded = $actualTotal - $targetAmount;
-
-        if ($discountNeeded > 0 && $actualTotal > 0) {
-            $appliedDiscount = $discountNeeded;
-            $discountPercent = ($appliedDiscount / $actualTotal) * 100;
-        }
-    }
-
-    $summarySubTotal = array_sum(array_column($selected, 'sub_total'));
-    $summaryTax = array_sum(array_column($selected, 'tax'));
-    $summaryDiscount = round($appliedDiscount, 2);
-    $summaryTotal = $summarySubTotal + $summaryTax - $summaryDiscount;
-
-    if ($summaryTotal == 0) {
-        return false;
-    }
-
-    return [
-        'products' => $selected,
-        'discount_percent' => round($discountPercent, 4),
-        'summary' => [
-            'sub_total' => round($summarySubTotal, 2),
-            'tax' => round($summaryTax, 2),
-            'discount' => $summaryDiscount,
-            'total' => round($summaryTotal, 2),
-            'target' => round($targetAmount, 2)
-        ]
-    ];
-}
 }

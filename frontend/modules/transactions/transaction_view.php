@@ -36,6 +36,5 @@ $config = [
 ];
 
 include __DIR__ . '/../../components/generic_view.php';
-
 include __DIR__ . '/../invoice/templates/classic.php';
 ?>
