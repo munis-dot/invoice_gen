@@ -232,7 +232,6 @@ function initUI() {
                             <div class="from-address">
                                 <h3>From:</h3>
                                 <p>${invoiceData ? invoiceData.address || 'Your Company Name' : 'Your Company Name'}</p>
-                                <p>${invoiceData ? invoiceData.address : '123 Business Street'}</p>
                                 <p>${invoiceData ? invoiceData.email || 'info@company.com' : 'info@company.com'}</p>
                                 <p>Phone: (123) 456-7890</p> <!-- Add phone if available in data -->
                             </div>
