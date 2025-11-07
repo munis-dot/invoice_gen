@@ -2,22 +2,6 @@
 require_once __DIR__ . '/utils/session.php';
 checkSession();
 
-// Fetch dashboard data if user is logged in
-if (isset($_SESSION['user'])) {
-    require_once __DIR__ . '/utils/api_client.php';
-    try {
-        $count = apiRequest("/invoice_gen/backend/public/api/dashboard", 'GET');
-        $customerCount = $count['customer'] ?? 0;
-        $invoiceCount = $count['invoice'] ?? 0;
-        $productCount = $count['product'] ?? 0;
-    } catch (Exception $e) {
-        // Handle API errors gracefully
-        $customerCount = 0;
-        $invoiceCount = 0;
-        $productCount = 0;
-        error_log("Dashboard API error: " . $e->getMessage());
-    }
-}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -28,8 +12,6 @@ if (isset($_SESSION['user'])) {
   <title>Invoice Generator</title>
   
   <!-- CSS Files -->
-  <!-- <link rel="stylesheet" href="assets/css/login.css">
-  <link rel="stylesheet" href="assets/css/invoice.css"> -->
   <link rel="stylesheet" href="assets/css/sidebar.css">
   <link rel="stylesheet" href="assets/css/header.css">
   <link rel="stylesheet" href="assets/css/list.css">

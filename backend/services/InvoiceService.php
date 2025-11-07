@@ -25,7 +25,7 @@ class InvoiceService
         $date = $payload['date'];
         $invoiceNumber = $payload['invoiceNumber'];
         $targetAmount = (float) $payload['amount'];
-        $paymentMethod = $payload['paymetMethod'] ?? 'cash';
+        $paymentMethod = $payload['paymentMethod'] ?? 'cash';
         $userId = $payload['created_by'] ?? null;
         $discountEnabled = $payload['discount'] === 'false' ? false : true;
         $companyLogo = $payload['company_logo'] ?? null;
