@@ -20,7 +20,7 @@ $config = [
             ['value' => 'true', 'label' => 'Yes'],
             ['value' => 'false', 'label' => 'No']
         ], 'required' => true],
-        ['name' => 'company_logo', 'label' => 'Company Logo', 'type' => 'file', 'accept' => 'image/*'],
+        ['name' => 'companyLogo', 'label' => 'Company Logo', 'type' => 'file', 'accept' => 'image/*'],
         ['name' => 'address', 'label' => 'Company Address', 'type' => 'text', 'required' => true],
         ['name' => 'email', 'label' => 'Company Email', 'type' => 'email', 'required' => true]
 

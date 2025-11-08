@@ -358,7 +358,7 @@ class Invoice
         $invoiceService = new InvoiceService();
 
         // Required fields validation
-        $requiredFields = ['invoiceNumber', 'paymentMethod', 'customerId', 'date', 'amount', 'discount', 'company_logo', 'email', 'address'];
+        $requiredFields = ['invoiceNumber', 'paymentMethod', 'customerId', 'date', 'amount', 'discount', 'companyLogo', 'email', 'address'];
         $successCount = 0;
         $processedInvoices = [];
 
@@ -402,7 +402,7 @@ class Invoice
                         'created_by' => $invoice['created_by'] ?? null,
                         'discount' => $invoice['discount'] ?? true,
                         'paymentMethod' => $invoice['paymentMethod'] ?? 'cash',
-                        'company_logo' => $invoice['company_logo'] ?? null,
+                        'company_logo' => $invoice['companyLogo'] ?? null,
                         'email' => $invoice['email'] ?? null,
                         'address' => $invoice['address'] ?? null,
                     ]);
