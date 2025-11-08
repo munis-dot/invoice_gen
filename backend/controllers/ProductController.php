@@ -76,7 +76,6 @@ class ProductController extends Controller {
         AuthMiddleware::handle(true); // admin only
         
         $data = $this->input();
-        echo json_encode($data);
         if (!isset($data) || !is_array($data)) {
             $this->json(['error' => 'Invalid input format. Expected array of items.'], 400);
             return;

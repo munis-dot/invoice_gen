@@ -142,12 +142,11 @@ export function initializeFormHandler(config) {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-
                 const result = await apiResp.json();
                 if (result && !result.error) {
                     showResult(true, 'Bulk upload successful!');
                     uploadForm.reset();
-                    if (onSuccess) onSuccess(result);
+                    if (onSuccess) onSuccess(result, 'Bulk upload successful!');
                 } else {
                     showResult(false, result.error || 'Bulk upload failed.');
                     if (onError) onError(result.error);

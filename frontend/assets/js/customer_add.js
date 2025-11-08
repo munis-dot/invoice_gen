@@ -8,7 +8,7 @@ initializeFormHandler({
     apiEndpoint: '/invoice_gen/backend/public/api/customers',
     apiEndpointBulk: '/invoice_gen/backend/public/api/customers/batch',
     onSuccess: function(data, message) {
-        if (data.success!=true) {
+        if (data.success!=true && !data.message) {
             throw new Error(data.error);
         }
         alert(message);
