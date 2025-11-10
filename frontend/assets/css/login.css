@@ -5,16 +5,64 @@
 
 body {
   font-family: "Poppins", sans-serif;
-  background: linear-gradient(135deg, #e59be7, #c0cee6);
-  overflow: hidden;
   margin: 0;
   height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-size: 300% 300%;
+
+  /* 🌈 Soft pastel animated gradient */
+  background: linear-gradient(135deg, #f8d7e3, #d6eaff, #e8f8d5, #f9e3c9);
+  background-size: 400% 400%;
   animation: gradientShift 12s ease infinite;
+
+  /* ✨ Subtle glow & border */
+  border: 8px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 40px rgba(255, 255, 255, 0.2), inset 0 0 25px rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+
+  /* 🌤️ Smooth fade-in */
+  opacity: 0;
+  animation: fadeIn 1.5s ease forwards, gradientShift 12s ease infinite;
+
+  /* 🩵 Text style */
+  color: #444;
+  text-shadow: 0 1px 3px rgba(255, 255, 255, 0.6);
+  -webkit-font-smoothing: antialiased;
+  transition: all 0.6s ease;
 }
+
+/* 🎨 Smooth color movement */
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* ☁️ Fade-in animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(1.02);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 💫 Gentle hover glow */
+body:hover {
+  box-shadow: 0 0 60px rgba(255, 255, 255, 0.4), inset 0 0 35px rgba(255, 255, 255, 0.2);
+  transition: box-shadow 0.8s ease;
+}
+
 
 /* 🌊 Animated gradient background motion */
 @keyframes gradientShift {
