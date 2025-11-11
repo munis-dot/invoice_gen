@@ -165,7 +165,6 @@ if (!$enableDiscount) {
     //$result holds the found combination (or null if none). $maxDepth stops recursion when no more items.
     $result = null;
     $maxDepth = count($items);
-
     /*$findCombination is the backtracking core that is closure (anonymous function) that calls itself.
 $index: Current product index (0 to $maxDepth-1)
 $currentCents: Current sum (starts at 0)
