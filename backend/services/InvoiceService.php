@@ -279,50 +279,36 @@ class InvoiceService
 // =====================================================================
 // MODE B: DISCOUNT ENABLED → Smart & Safe Product Selection
 // =====================================================================
+// =====================================================================
+// MODE B: DISCOUNT ENABLED → MUST OVERSHOOT TARGET TO APPLY DISCOUNT
+// =====================================================================
 
-// Step 1: Sort items from most expensive to cheapest (greedy approach)
 usort($items, fn($a, $b) => $b['price'] <=> $a['price']);
 
-// CRITICAL SAFETY RULE: Never allow any single item > 3× target amount
-// This prevents insane 98% discounts (e.g., ₹7999 item for ₹160 target)
-$maxAllowedItemPrice = $targetAmount * 3;  // Example: 160 × 3 = 480 max item price
+$maxAllowedItemPrice = $targetAmount * 3;
+$buffer              = $targetAmount * 0.10;           // 10% buffer (was 5%)
+$targetWithBuffer    = $targetAmount + $buffer;        // e.g., 150 → 165
 
-// Allow up to 5% buffer so we can comfortably apply a small discount later
-$buffer           = $targetAmount * 0.05;           // 5% extra room
-$targetWithBuffer = $targetAmount + $buffer;        // e.g., 160 → 168
+$selected    = [];
+$remaining   = $targetWithBuffer;
+$priceGroups = [];
 
-$selected     = [];     // Final list of chosen products
-$remaining    = $targetWithBuffer;  // How much more we can still add
-$priceGroups  = [];     // Group products by exact price (to avoid float issues)
-
-// Step 2: Group products by price and exclude crazy expensive ones
+// Group items by price
 foreach ($items as $item) {
-    // Skip items that are way too expensive — would force huge discount
-    if ($item['price'] > $maxAllowedItemPrice) {
-        continue;  // Example: Skip ₹7999 course when target is ₹160
-    }
+    if ($item['price'] > $maxAllowedItemPrice) continue;
 
-    // Use formatted price as key to avoid floating-point comparison bugs
     $priceKey = number_format($item['price'], 2, '.', '');
-
-    // Create group if not exists
-    if (!isset($priceGroups[$priceKey])) {
-        $priceGroups[$priceKey] = [];
-    }
-
-    // Add item to its price group
+    if (!isset($priceGroups[$priceKey])) $priceGroups[$priceKey] = [];
     $priceGroups[$priceKey][] = $item;
 }
 
-// Get all available price levels (sorted ascending)
 $availablePrices = array_keys($priceGroups);
 sort($availablePrices, SORT_NUMERIC);
 
-// Step 3: Main selection loop — keep adding items until we reach target + buffer
 while ($remaining > 0.01 && !empty($availablePrices)) {
     $chosenPrice = null;
 
-    // Priority 1: Pick the largest item that fits within remaining budget
+    // 1. Try largest item that fits
     foreach (array_reverse($availablePrices) as $p) {
         if ($p <= $remaining) {
             $chosenPrice = $p;
@@ -330,40 +316,25 @@ while ($remaining > 0.01 && !empty($availablePrices)) {
         }
     }
 
-    // Priority 2: If nothing fits exactly, allow slightly larger item (1.5× remaining)
-    // Prevents getting stuck when only big items remain
+    // 2. If nothing fits — pick the SMALLEST item to keep adding
     if ($chosenPrice === null && !empty($availablePrices)) {
-        foreach (array_reverse($availablePrices) as $p) {
-            if ($p <= $remaining * 1.5) {
-                $chosenPrice = $p;
-                break;
-            }
-        }
+        $chosenPrice = $availablePrices[0]; // ← FORCE CONTINUE
     }
 
-    // If still no valid item → stop (safety exit)
-    if ($chosenPrice === null) {
-        break;
-    }
+    if ($chosenPrice === null) break;
 
-    // Get the group of products at this price
     $priceKey = number_format((float)$chosenPrice, 2, '.', '');
     $group    = $priceGroups[$priceKey];
+    $chosenItem = $group[array_rand($group)];
 
-    // Randomly pick one product from this price group (fair distribution)
-    $randomIndex = array_rand($group);
-    $chosenItem  = $group[$randomIndex];
-
-    // Determine quantity (only physical products can have qty > 1)
     $qty = 1;
     if ($chosenItem['can_add_quantity']) {
         $maxQty = min($chosenItem['max_qty'], (int)floor($remaining / $chosenItem['price']));
-        $qty = max(1, $maxQty);  // At least 1, up to what fits
+        $qty = max(1, $maxQty);
     }
 
     $lineTotal = $chosenItem['price'] * $qty;
 
-    // Add this line item to final selection
     $selected[] = [
         'id'        => $chosenItem['id'],
         'name'      => $chosenItem['name'],
@@ -373,13 +344,9 @@ while ($remaining > 0.01 && !empty($availablePrices)) {
         'total'     => round($lineTotal, 2),
     ];
 
-    // Reduce remaining budget
     $remaining -= $lineTotal;
 
-    // Remove the used product from the pool
-    unset($priceGroups[$priceKey][$randomIndex]);
-
-    // Clean up empty price group
+    unset($priceGroups[$priceKey][array_key_first(array_slice($priceGroups[$priceKey], 0, 1))]);
     if (empty($priceGroups[$priceKey])) {
         unset($priceGroups[$priceKey]);
         $availablePrices = array_keys($priceGroups);
@@ -387,34 +354,53 @@ while ($remaining > 0.01 && !empty($availablePrices)) {
     }
 }
 
-// Step 4: Final calculation — apply discount to hit exact target
-$grossTotal = array_sum(array_column($selected, 'sub_total'));  // Total before discount
+// FINAL: Force overshoot — if still under target, add smallest item until we exceed
+$grossTotal = array_sum(array_column($selected, 'sub_total'));
 
-// Only apply discount if we exceeded target (never give negative discount)
-$discount = round($grossTotal - $targetAmount, 2);
-$discount = max(0, $discount);  // Ensures no negative values
+while ($grossTotal < $targetAmount && !empty($availablePrices)) {
+    $smallestPrice = $availablePrices[0];
+    $priceKey = number_format($smallestPrice, 2, '.', '');
+    $group = $priceGroups[$priceKey] ?? [];
+    if (empty($group)) break;
 
-$finalTotal = round($targetAmount, 2);  // Final billed amount = exact target
+    $item = $group[array_rand($group)];
 
-// Calculate discount percentage (for display)
-$discountPercent = $grossTotal > 0 
-    ? round(($discount / $grossTotal) * 100, 4) 
-    : 0;
+    $selected[] = [
+        'id'        => $item['id'],
+        'name'      => $item['name'],
+        'qty'       => 1,
+        'price'     => round($item['price'], 2),
+        'sub_total' => round($item['price'], 2),
+        'total'     => round($item['price'], 2),
+    ];
 
-// Step 5: Return clean, professional output
+    $grossTotal += $item['price'];
+    unset($priceGroups[$priceKey][array_key_first($priceGroups[$priceKey])]);
+    if (empty($priceGroups[$priceKey])) {
+        unset($priceGroups[$priceKey]);
+        $availablePrices = array_keys($priceGroups);
+        sort($availablePrices, SORT_NUMERIC);
+    }
+}
+
+// FINAL CALCULATION — NOW WE GUARANTEE DISCOUNT
+$grossTotal = array_sum(array_column($selected, 'sub_total'));
+$discount   = round($grossTotal - $targetAmount, 2);
+$discount   = max(0, $discount);  // Always ≥ 0
+
+$discountPercent = $grossTotal > 0 ? round(($discount / $grossTotal) * 100, 2) : 0;
+
 $output = [
     'products' => $selected,
-    //'discount_percent' => $discountPercent,
     'summary' => [
-        'sub_total' => round($grossTotal, 2),   // Amount before discount
-        'discount'  => round($discount, 2),     // Discount amount given
-        'tax'       => 0.0,                     // Add tax logic later if needed
-        'total'     => $finalTotal,             // Final amount customer pays
-        'target'    => round($targetAmount, 2)  // Original requested amount
+        'sub_total' => round($grossTotal, 2),
+        'discount'  => round($discount, 2),
+        'tax'       => 0.0,
+        'total'     => round($targetAmount, 2),
+        'target'    => round($targetAmount, 2)
     ]
 ];
 
-// Log success and return
 $logEnd('SUCCESS', count($selected));
 return $output;
     }
