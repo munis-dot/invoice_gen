@@ -283,11 +283,13 @@ class InvoiceService
 // MODE B: DISCOUNT ENABLED → MUST OVERSHOOT TARGET TO APPLY DISCOUNT
 // =====================================================================
 
-usort($items, fn($a, $b) => $b['price'] <=> $a['price']);
+usort($items, function($a, $b) {
+    return $b['price'] <=> $a['price'];
+});
 
 $maxAllowedItemPrice = $targetAmount * 3;
-$buffer              = $targetAmount * 0.10;           // 10% buffer (was 5%)
-$targetWithBuffer    = $targetAmount + $buffer;        // e.g., 150 → 165
+$buffer              = $targetAmount * 0.10;           // 10% buffer → allows nice overshoot
+$targetWithBuffer    = $targetAmount + $buffer;
 
 $selected    = [];
 $remaining   = $targetWithBuffer;
@@ -306,6 +308,12 @@ $availablePrices = array_keys($priceGroups);
 sort($availablePrices, SORT_NUMERIC);
 
 while ($remaining > 0.01 && !empty($availablePrices)) {
+    // CRITICAL FIX: Stop early if we already reached the original target
+    $currentTotal = array_sum(array_column($selected, 'sub_total'));
+    if ($currentTotal >= $targetAmount) {
+        break; // ← This prevents adding tiny items after overshoot!
+    }
+
     $chosenPrice = null;
 
     // 1. Try largest item that fits
@@ -316,15 +324,15 @@ while ($remaining > 0.01 && !empty($availablePrices)) {
         }
     }
 
-    // 2. If nothing fits — pick the SMALLEST item to keep adding
+    // 2. If nothing fits → pick smallest to keep going
     if ($chosenPrice === null && !empty($availablePrices)) {
-        $chosenPrice = $availablePrices[0]; // ← FORCE CONTINUE
+        $chosenPrice = $availablePrices[0];
     }
 
     if ($chosenPrice === null) break;
 
-    $priceKey = number_format((float)$chosenPrice, 2, '.', '');
-    $group    = $priceGroups[$priceKey];
+    $priceKey   = number_format((float)$chosenPrice, 2, '.', '');
+    $group      = $priceGroups[$priceKey];
     $chosenItem = $group[array_rand($group)];
 
     $qty = 1;
@@ -346,7 +354,9 @@ while ($remaining > 0.01 && !empty($availablePrices)) {
 
     $remaining -= $lineTotal;
 
-    unset($priceGroups[$priceKey][array_key_first(array_slice($priceGroups[$priceKey], 0, 1))]);
+    // Remove used item
+    $firstKey = array_key_first($priceGroups[$priceKey]);
+    unset($priceGroups[$priceKey][$firstKey]);
     if (empty($priceGroups[$priceKey])) {
         unset($priceGroups[$priceKey]);
         $availablePrices = array_keys($priceGroups);
@@ -354,39 +364,12 @@ while ($remaining > 0.01 && !empty($availablePrices)) {
     }
 }
 
-// FINAL: Force overshoot — if still under target, add smallest item until we exceed
-$grossTotal = array_sum(array_column($selected, 'sub_total'));
+// REMOVED THE ENTIRE "force overshoot" loop → it was harmful!
 
-while ($grossTotal < $targetAmount && !empty($availablePrices)) {
-    $smallestPrice = $availablePrices[0];
-    $priceKey = number_format($smallestPrice, 2, '.', '');
-    $group = $priceGroups[$priceKey] ?? [];
-    if (empty($group)) break;
-
-    $item = $group[array_rand($group)];
-
-    $selected[] = [
-        'id'        => $item['id'],
-        'name'      => $item['name'],
-        'qty'       => 1,
-        'price'     => round($item['price'], 2),
-        'sub_total' => round($item['price'], 2),
-        'total'     => round($item['price'], 2),
-    ];
-
-    $grossTotal += $item['price'];
-    unset($priceGroups[$priceKey][array_key_first($priceGroups[$priceKey])]);
-    if (empty($priceGroups[$priceKey])) {
-        unset($priceGroups[$priceKey]);
-        $availablePrices = array_keys($priceGroups);
-        sort($availablePrices, SORT_NUMERIC);
-    }
-}
-
-// FINAL CALCULATION — NOW WE GUARANTEE DISCOUNT
+// FINAL CALCULATION — Clean & Professional Discount
 $grossTotal = array_sum(array_column($selected, 'sub_total'));
 $discount   = round($grossTotal - $targetAmount, 2);
-$discount   = max(0, $discount);  // Always ≥ 0
+$discount   = max(0, $discount);
 
 $discountPercent = $grossTotal > 0 ? round(($discount / $grossTotal) * 100, 2) : 0;
 
