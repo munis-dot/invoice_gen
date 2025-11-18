@@ -194,11 +194,7 @@ class InvoiceService
             $findCombination, $index, $currentCents, $currentSelection,
             $item, $targetCents, &$result
         ) {
-            // Case 1: Skip this product completely (qty = 0)
-            if ($qty === 0) {
-                $findCombination($index + 1, $currentCents, $currentSelection);
-                return;
-            }
+        
 
             // Calculate new total after adding this quantity
             $newCents = $currentCents + $item['unit_total_cents'] * $qty;
@@ -237,14 +233,15 @@ class InvoiceService
             $maxPossible  = min($maxQty, (int)floor(($targetCents - $currentCents) / $item['unit_total_cents']));
 
             // Try from highest possible qty down to 0 → faster solution discovery
-            for ($qty = $maxPossible; $qty >= 0; $qty--) {
+            for ($qty = $maxPossible; $qty >= 1; $qty--) {
                 $addItemAndContinue($qty);
                 if ($result !== null) return;  // Stop early if found
             }
         } else {
             // DIGITAL PRODUCT: Can only sell 0 or 1 (like license, course)
             $addItemAndContinue(1);  // Try including it
-            $addItemAndContinue(0);  // Always try skipping it too
+            $findCombination($index + 1, $currentCents, $currentSelection);
+            if ($result !== null) return;  // Always try skipping it too
         }
     };
 
@@ -373,7 +370,6 @@ while ($remaining > 0.01 && !empty($availablePrices)) {
         'qty'       => $qty,
         'price'     => round($chosenItem['price'], 2),
         'sub_total' => round($lineTotal, 2),
-        'discount'  => 0.0,
         'total'     => round($lineTotal, 2),
     ];
 
@@ -408,7 +404,7 @@ $discountPercent = $grossTotal > 0
 // Step 5: Return clean, professional output
 $output = [
     'products' => $selected,
-    'discount_percent' => $discountPercent,
+    //'discount_percent' => $discountPercent,
     'summary' => [
         'sub_total' => round($grossTotal, 2),   // Amount before discount
         'discount'  => round($discount, 2),     // Discount amount given
