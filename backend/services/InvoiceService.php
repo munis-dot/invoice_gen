@@ -194,7 +194,6 @@ class InvoiceService
             $findCombination, $index, $currentCents, $currentSelection,
             $item, $targetCents, &$result
         ) {
-        
 
             // Calculate new total after adding this quantity
             $newCents = $currentCents + $item['unit_total_cents'] * $qty;
@@ -230,13 +229,9 @@ class InvoiceService
         if ($item['can_add_quantity']) {
             // PHYSICAL PRODUCT: Can sell multiple quantities (like Pen, Mouse, etc.)
             $maxQty       = $item['max_qty'];  // Usually unlimited
-            $maxPossible  = min($maxQty, (int)floor(($targetCents - $currentCents) / $item['unit_total_cents']));
-
-            // Try from highest possible qty down to 0 → faster solution discovery
-            for ($qty = $maxPossible; $qty >= 1; $qty--) {
-                $addItemAndContinue($qty);
-                if ($result !== null) return;  // Stop early if found
-            }
+            $maxPossible  = min($maxQty, (int)floor(($targetCents - $currentCents) / $item['unit_total_cents']));// Try from highest possible qty down to 0 → faster solution discovery
+            $addItemAndContinue($maxPossible);               
+                
         } else {
             // DIGITAL PRODUCT: Can only sell 0 or 1 (like license, course)
             $addItemAndContinue(1);  // Try including it
@@ -276,9 +271,6 @@ class InvoiceService
     $logEnd('EXACT_MATCH', count($result));
     return $output;
 }
-// =====================================================================
-// MODE B: DISCOUNT ENABLED → Smart & Safe Product Selection
-// =====================================================================
 // =====================================================================
 // MODE B: DISCOUNT ENABLED → MUST OVERSHOOT TARGET TO APPLY DISCOUNT
 // =====================================================================

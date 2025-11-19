@@ -33,11 +33,6 @@ if (is_array($response) && !empty($response['success'])) {
         loginUser($user);
     }
 
-    // Generate CSRF token for forms
-    if (function_exists('storeToken')) {
-        storeToken();
-    }
-
     header('Location: ../index.php');
     exit;
 }

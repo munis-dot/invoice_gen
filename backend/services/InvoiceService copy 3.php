@@ -7,11 +7,22 @@ class InvoiceService
 
     public function __construct()
     {
+        // Initialize Invoice model for database operations
         $this->invoiceModel = new Invoice();
     }
 
+    /**
+     * ===============================================================
+     * MAIN FUNCTION – PROCESS INVOICE
+     * ===============================================================
+     * Creates an invoice by:
+     * 1. Validating customer data
+     * 2. Generating product mix for target amount
+     * 3. Inserting invoice + invoice items
+     */
     public function processInvoice(array $payload): array
     {
+        // Extract payload details
         $customerId       = $payload['customerId'];
         $date             = $payload['date'];
         $invoiceNumber    = $payload['invoiceNumber'];
@@ -23,19 +34,25 @@ class InvoiceService
         $email            = $payload['email'] ?? null;
         $address          = $payload['address'] ?? null;
 
+        // --- Validate customer existence ---
         require_once __DIR__ . '/../models/Customer.php';
         $customer = Customer::find($customerId);
         if (!$customer) {
             throw new Exception("Customer not found with ID: $customerId");
         }
 
+        // --- Fetch all products from DB ---
         $products = $this->invoiceModel->getAllProducts();
+
+        // --- Generate best product mix for target amount ---
         $productMix = $this->generateProductMix($products, $targetAmount, $discountEnabled);
 
+        // --- If algorithm fails, throw error ---
         if (isset($productMix['error'])) {
             throw new Exception($productMix['error']);
         }
 
+        // --- Create main invoice entry in DB ---
         $invoiceId = $this->invoiceModel->createInvoice([
             'invoice_number' => $invoiceNumber,
             'customer_id'    => $customerId,
@@ -52,8 +69,10 @@ class InvoiceService
             'pdf_path'       => null
         ]);
 
+        // --- Insert each product line into invoice_items table ---
         $this->invoiceModel->createInvoiceItems($invoiceId, $productMix['products']);
 
+        // --- Return summary to caller ---
         return [
             'invoice_id' => $invoiceId,
             'products'   => $productMix['products'],
@@ -61,14 +80,20 @@ class InvoiceService
         ];
     }
 
+    // Generate random invoice number (fallback)
     private function generateInvoiceNumber(): string
     {
         return 'INV-' . str_pad(rand(100000, 999999), 6, '0', STR_PAD_LEFT);
     }
 
-    // ===================================================================
-    // MAIN ALGORITHM – TAX ADDED ONLY
-    // ===================================================================
+    /**
+     * ===============================================================
+     * MAIN ALGORITHM – GENERATE PRODUCT MIX
+     * ===============================================================
+     * Handles two modes:
+     * (A) Discount Disabled → Exact match using backtracking
+     * (B) Discount Enabled → Greedy algorithm + auto discount
+     */
     public function generateProductMix(array $products, float $targetAmount, bool $enableDiscount = true): array
     {
         $startTime = microtime(true);
@@ -76,6 +101,7 @@ class InvoiceService
         echo "[generateProductMix] START | Target: $targetAmount | Items: " . count($products)
            . " | Discount: " . ($enableDiscount ? 'ON' : 'OFF') . "\n";
 
+        // Closure to log end summary with time taken
         $logEnd = function (string $status, ?int $items = null) use ($startTime) {
             $duration = round((microtime(true) - $startTime) * 1000, 3);
             $msg = "[generateProductMix] END | Duration: {$duration}ms | Result: $status";
@@ -83,6 +109,7 @@ class InvoiceService
             echo $msg . "\n";
         };
 
+        // --- Step 1: Validate input ---
         if (empty($products) || $targetAmount <= 0) {
             $logEnd('ERROR (Invalid input)', 0);
             return [
@@ -91,21 +118,24 @@ class InvoiceService
             ];
         }
 
-        // === 1. PREPARE ITEMS WITH TAX ===
+        // --- Step 2: Prepare items with tax computation ---
         $items = [];
         foreach ($products as $p) {
             $price = (float)($p['price'] ?? 0);
-            if ($price <= 0) continue;
+            if ($price <= 0) continue; // skip invalid products
 
             $taxRate = (float)($p['tax_rate'] ?? 0);
             $type = $p['product_type'] ?? 'physical';
 
+            // Only physical products can have multiple quantities
             $canAddQuantity = ($type === 'physical');
             $maxQty = $canAddQuantity ? PHP_INT_MAX : 1;
 
+            // Convert to cents to avoid float precision errors
             $priceCents = (int)round($price * 100);
             $unitTotalCents = (int)round($priceCents * (1 + $taxRate / 100));
 
+            // Store formatted item data
             $items[] = [
                 'id'               => $p['id'],
                 'name'             => $p['name'],
@@ -123,208 +153,238 @@ class InvoiceService
             return ['error' => 'No valid products', 'debug' => ['target_amount' => $targetAmount]];
         }
 
-        // === 2. DISCOUNT DISABLED → EXACT MATCH (BACKTRACKING) ===
+        // =====================================================================
+        // MODE A: DISCOUNT DISABLED → NEED EXACT MATCH (Backtracking Search)
+        // =====================================================================
         if (!$enableDiscount) {
-            $targetCents = (int)round($targetAmount * 100);
+    // Convert target amount to cents (paise) to avoid floating-point errors
+    $targetCents = (int)round($targetAmount * 100);  // ₹1000 → 100000 cents
 
-            usort($items, fn($a, $b) => $b['price'] <=> $a['price']);
-            $result = null;
-            $maxDepth = count($items);
+    // Sort products by using Spaceship Operator( HIGHEST to LOWEST price) → helps find solution faster 
+    usort($items, fn($a, $b) => $b['price'] <=> $a['price']);
 
-            $findCombination = function (int $index, int $currentCents, array $currentSelection) use (
-                &$findCombination, $items, $targetCents, &$result, $maxDepth
-            ): void {
-                if ($result !== null) return;
-                if ($currentCents === $targetCents) {
-                    $result = $currentSelection;
-                    return;
-                }
-                if ($index >= $maxDepth || $currentCents > $targetCents) return;
+    $result   = null;                    // Will store the winning combination when found
+    $maxDepth = count($items);           // Total number of products (e.g., 27)
 
-                $item = $items[$index];
-                $maxQty = $item['can_add_quantity'] ? $item['max_qty'] : 1;
-                $maxPossibleQty = $item['can_add_quantity']
-                    ? min($maxQty, (int)floor(($targetCents - $currentCents) / $item['unit_total_cents']))
-                    : 1;
+    // RECURSIVE FUNCTION: Tries to build an invoice that exactly matches target
+    $findCombination = function (
+        int   $index,                    // Which product are we deciding now? (0 = first)
+        int   $currentCents,             // How much total we have collected so far
+        array $currentSelection          // Current list of selected items (the cart)
+    ) use (
+        &$findCombination,$items, $targetCents, &$result, $maxDepth
+    ): void {
 
-                for ($qty = $maxPossibleQty; $qty >= 0; $qty--) {
-                    if ($qty === 0) {
-                        $findCombination($index + 1, $currentCents, $currentSelection);
-                        continue;
-                    }
+        // STOP EARLY: We already found a solution in another branch
+        if ($result !== null) return;
 
-                    $newCents = $currentCents + $item['unit_total_cents'] * $qty;
-                    if ($newCents > $targetCents) continue;
-
-                    $lineSubTotal = round($item['price_cents'] * $qty / 100, 2);
-                    $lineTax = round($lineSubTotal * ($item['tax_rate'] / 100), 2);
-
-                    $newSelection = $currentSelection;
-                    $newSelection[] = [
-                        'id'        => $item['id'],
-                        'name'      => $item['name'],
-                        'qty'       => $qty,
-                        'price'     => round($item['price'], 2),
-                        'sub_total' => $lineSubTotal,
-                        'tax'       => $lineTax,
-                        'total'     => round($lineSubTotal + $lineTax, 2),
-                    ];
-
-                    $findCombination($index + 1, $newCents, $newSelection);
-                    if ($result !== null) return;
-                }
-            };
-
-            $findCombination(0, 0, []);
-
-            if ($result === null) {
-                $logEnd('NO_EXACT_MATCH', 0);
-                return [
-                    'error' => 'Cannot reach target exactly without discount',
-                    'debug' => ['target_amount' => $targetAmount]
-                ];
-            }
-
-            $subTotal = array_sum(array_column($result, 'sub_total'));
-            $taxTotal = array_sum(array_column($result, 'tax'));
-
-            $output = [
-                'products' => $result,
-                'discount_percent' => 0.0,
-                'summary' => [
-                    'sub_total' => round($subTotal, 2),
-                    'discount'  => 0.0,
-                    'tax'       => round($taxTotal, 2),
-                    'total'     => round($subTotal + $taxTotal, 2),
-                    'target'    => round($targetAmount, 2)
-                ]
-            ];
-
-            $logEnd('EXACT_MATCH', count($result));
-            return $output;
+        // JACKPOT! We hit exactly ₹1000.00 → save result and stop
+        if ($currentCents === $targetCents) {
+            $result = $currentSelection;
+            return;
         }
 
-        // === 3. DISCOUNT ENABLED → GREEDY + 10% OVERSHOOT ===
-          usort($items, fn($a, $b) => $b['price'] <=> $a['price']);
+        // DEAD END: No more products left OR we already overshot target
+        if ($index >= $maxDepth || $currentCents > $targetCents) return;
 
-// Define maximum overshoot allowed (10% above target)
-$maxOvershoot = $targetAmount * 0.1;
-$maxAllowed   = $targetAmount + $maxOvershoot;
+        $item = $items[$index];  // Current product we're deciding about
 
-// Initialize tracking variables
-$selected = [];   // Stores selected items
-$current  = 0.0;  // Current accumulated total
+        // HELPER FUNCTION: Adds given quantity and moves to next product
+        $addItemAndContinue = function(int $qty) use (
+            $findCombination, $index, $currentCents, $currentSelection,
+            $item, $targetCents, &$result
+        ) {
+        
 
-// ---------------- MAIN SELECTION LOOP ----------------
+            // Calculate new total after adding this quantity
+            $newCents = $currentCents + $item['unit_total_cents'] * $qty;
+
+            // If adding this makes total > target → impossible → skip
+            if ($newCents > $targetCents) return;
+
+            // Calculate line item amounts (subtotal, tax, total)
+            $lineSubTotal = round($item['price_cents'] * $qty / 100, 2);
+            $lineTax      = round($lineSubTotal * ($item['tax_rate'] / 100), 2);
+
+            // Create a new cart by adding this item
+            $newSelection = $currentSelection;
+            $newSelection[] = [
+                'id'        => $item['id'],
+                'name'      => $item['name'],
+                'qty'       => $qty,
+                'price'     => round($item['price'], 2),
+                'sub_total' => $lineSubTotal,
+                'tax'       => $lineTax,
+                'total'     => round($lineSubTotal + $lineTax, 2),
+            ];
+
+            // RECURSIVE CALL: Now decide for the NEXT product
+            $findCombination($index + 1, $newCents, $newSelection);
+
+            // If solution found in deeper call → stop everything
+            if ($result !== null) return;
+        };
+
+        // ——————————— MAIN LOGIC: Decide based on product type ———————————
+
+        if ($item['can_add_quantity']) {
+            // PHYSICAL PRODUCT: Can sell multiple quantities (like Pen, Mouse, etc.)
+            $maxQty       = $item['max_qty'];  // Usually unlimited
+            $maxPossible  = min($maxQty, (int)floor(($targetCents - $currentCents) / $item['unit_total_cents']));
+
+            // Try from highest possible qty down to 0 → faster solution discovery
+            for ($qty = $maxPossible; $qty >= 1; $qty--) {
+                $addItemAndContinue($qty);
+                if ($result !== null) return;  // Stop early if found
+            }
+        } else {
+            // DIGITAL PRODUCT: Can only sell 0 or 1 (like license, course)
+            $addItemAndContinue(1);  // Try including it
+            $findCombination($index + 1, $currentCents, $currentSelection);
+            if ($result !== null) return;  // Always try skipping it too
+        }
+    };
+
+    // START THE SEARCH: Begin with first product, ₹0 total, empty cart
+    $findCombination(0, 0, []);
+
+    // If no exact combination found → return error
+    if ($result === null) {
+        $logEnd('NO_EXACT_MATCH', 0);
+        return [
+            'error' => 'Cannot reach target exactly without discount',
+            'debug' => ['target_amount' => $targetAmount]
+        ];
+    }
+
+    // SUCCESS: Calculate final totals from the winning combination
+    $subTotal = array_sum(array_column($result, 'sub_total'));
+    $taxTotal = array_sum(array_column($result, 'tax'));
+
+    $output = [
+        'products'         => $result,
+        'discount_percent' => 0.0,
+        'summary'          => [
+            'sub_total' => round($subTotal, 2),
+            'discount'  => 0.0,
+            'tax'       => round($taxTotal, 2),
+            'total'     => round($subTotal + $taxTotal, 2),
+            'target'    => round($targetAmount, 2)
+        ]
+    ];
+
+    $logEnd('EXACT_MATCH', count($result));
+    return $output;
+}
+// =====================================================================
+// MODE B: DISCOUNT ENABLED → Smart & Safe Product Selection
+// =====================================================================
+// =====================================================================
+// MODE B: DISCOUNT ENABLED → MUST OVERSHOOT TARGET TO APPLY DISCOUNT
+// =====================================================================
+
+usort($items, function($a, $b) {
+    return $b['price'] <=> $a['price'];
+});
+
+$maxAllowedItemPrice = $targetAmount * 3;
+$buffer              = $targetAmount * 0.10;           // 10% buffer → allows nice overshoot
+$targetWithBuffer    = $targetAmount + $buffer;
+
+$selected    = [];
+$remaining   = $targetWithBuffer;
+$priceGroups = [];
+
+// Group items by price
 foreach ($items as $item) {
-    // Stop if we’ve already reached or exceeded the max allowed amount
-    if ($current >= $maxAllowed) break;
+    if ($item['price'] > $maxAllowedItemPrice) continue;
 
-    // Calculate how many units of this item can fit within the remaining budget
-    $affordable = (int)floor(($maxAllowed - $current) / $item['price']);
+    $priceKey = number_format($item['price'], 2, '.', '');
+    if (!isset($priceGroups[$priceKey])) $priceGroups[$priceKey] = [];
+    $priceGroups[$priceKey][] = $item;
+}
 
-    // Limit quantity based on available stock (max_qty)
-    $qty = min($affordable, $item['max_qty']);
-    $qty = max(1, $qty); // Ensure at least one item is picked
+$availablePrices = array_keys($priceGroups);
+sort($availablePrices, SORT_NUMERIC);
 
-    // If the item is digital (cannot add quantity), enforce qty = 1
-    if (!$item['can_add_quantity'] && $qty > 1) {
-        $qty = 1;
+while ($remaining > 0.01 && !empty($availablePrices)) {
+    // CRITICAL FIX: Stop early if we already reached the original target
+    $currentTotal = array_sum(array_column($selected, 'sub_total'));
+    if ($currentTotal >= $targetAmount) {
+        break; // ← This prevents adding tiny items after overshoot!
     }
 
-    // Compute subtotal for this item line
-    $lineTotal = $item['price'] * $qty;
+    $chosenPrice = null;
 
-    // Check if adding this item would exceed the max allowed total
-    if ($current + $lineTotal > $maxAllowed) {
-        // Recalculate qty to fit exactly within budget
-        $qty = (int)floor(($maxAllowed - $current) / $item['price']);
-        if ($qty < 1) continue; // Skip if cannot fit even one unit
-        $lineTotal = $item['price'] * $qty;
+    // 1. Try largest item that fits
+    foreach (array_reverse($availablePrices) as $p) {
+        if ($p <= $remaining) {
+            $chosenPrice = $p;
+            break;
+        }
     }
 
-    // Add item to selected list
+    // 2. If nothing fits → pick smallest to keep going
+    if ($chosenPrice === null && !empty($availablePrices)) {
+        $chosenPrice = $availablePrices[0];
+    }
+
+    if ($chosenPrice === null) break;
+
+    $priceKey   = number_format((float)$chosenPrice, 2, '.', '');
+    $group      = $priceGroups[$priceKey];
+    $chosenItem = $group[array_rand($group)];
+
+    $qty = 1;
+    if ($chosenItem['can_add_quantity']) {
+        $maxQty = min($chosenItem['max_qty'], (int)floor($remaining / $chosenItem['price']));
+        $qty = max(1, $maxQty);
+    }
+
+    $lineTotal = $chosenItem['price'] * $qty;
+
     $selected[] = [
-        'id'        => $item['id'],
-        'name'      => $item['name'],
+        'id'        => $chosenItem['id'],
+        'name'      => $chosenItem['name'],
         'qty'       => $qty,
-        'price'     => round($item['price'], 2),
+        'price'     => round($chosenItem['price'], 2),
         'sub_total' => round($lineTotal, 2),
-        'discount'  => 0.0,
         'total'     => round($lineTotal, 2),
     ];
 
-    // Update current total
-    $current += $lineTotal;
-}
+    $remaining -= $lineTotal;
 
-// ---------------- FILL SMALL GAP LOGIC ----------------
-// If there’s still a small gap below the target, try to fill it with a cheaper item
-if ($current < $targetAmount && $current < $maxAllowed) {
-    foreach (array_reverse($items) as $item) {
-        // Add a low-priced item if it fits within the allowed total
-        if ($current + $item['price'] <= $maxAllowed) {
-            $selected[] = [
-                'id'        => $item['id'],
-                'name'      => $item['name'],
-                'qty'       => 1,
-                'price'     => round($item['price'], 2),
-                'sub_total' => round($item['price'], 2),
-                'discount'  => 0.0,
-                'total'     => round($item['price'], 2),
-            ];
-            $current += $item['price'];
-            break; // Stop after adding one filler item
-        }
+    // Remove used item
+    $firstKey = array_key_first($priceGroups[$priceKey]);
+    unset($priceGroups[$priceKey][$firstKey]);
+    if (empty($priceGroups[$priceKey])) {
+        unset($priceGroups[$priceKey]);
+        $availablePrices = array_keys($priceGroups);
+        sort($availablePrices, SORT_NUMERIC);
     }
 }
 
-// ---------------- DISCOUNT CALCULATION ----------------
-// Compute total from selected items
-$total = array_sum(array_column($selected, 'sub_total'));
+// REMOVED THE ENTIRE "force overshoot" loop → it was harmful!
 
-// Initialize discount values
-$discount = 0.0;
-$discountPercent = 0.0;
+// FINAL CALCULATION — Clean & Professional Discount
+$grossTotal = array_sum(array_column($selected, 'sub_total'));
+$discount   = round($grossTotal - $targetAmount, 2);
+$discount   = max(0, $discount);
 
-// If total exceeds target, apply discount to match target
-if ($total > $targetAmount) {
-    $discount = round($total - $targetAmount, 2);
-    $discountPercent = $total > 0 ? round(($discount / $total) * 100, 4) : 0;
-    $total = round($targetAmount, 2);
-}
+$discountPercent = $grossTotal > 0 ? round(($discount / $grossTotal) * 100, 2) : 0;
 
-// ---------------- OUTPUT PREPARATION ----------------
 $output = [
     'products' => $selected,
-    'discount_percent' => $discountPercent,
     'summary' => [
-        'sub_total' => round($total + $discount, 2),
-        'discount'  => $discount,
-        'total'     => $total,
+        'sub_total' => round($grossTotal, 2),
+        'discount'  => round($discount, 2),
+        'tax'       => 0.0,
+        'total'     => round($targetAmount, 2),
         'target'    => round($targetAmount, 2)
     ]
 ];
 
-// ---------------- ERROR CHECKING & LOGGING ----------------
-// Compare final total with target to check for small mismatches
-$diff = abs($total - $targetAmount);
-if ($diff > 0.01) {
-    // Log as partial match (used discount to reach target)
-    $output['error'] = 'Used discount to match target';
-    $output['debug'] = [
-        'gross_total' => round($total + $discount, 2),
-        'target'      => $targetAmount,
-        'difference'  => round($diff, 2),
-        'items'       => count($selected)
-    ];
-    $logEnd('PARTIAL_MATCH', count($selected));
-} else {
-    // Perfect match with target
-    $logEnd('SUCCESS', count($selected));
-}
-
-// Return final structured result
+$logEnd('SUCCESS', count($selected));
 return $output;
-}
+    }
 }

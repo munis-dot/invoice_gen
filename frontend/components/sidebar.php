@@ -23,5 +23,6 @@ function isActiveLink($link_path, $current_page) {
     <li><a href="#" data-link="products/list" class="nav-link <?php echo isActiveLink('products', $page) ? 'active' : ''; ?>">Products</a></li>
     <li><a href="#" data-link="transactions/transaction_list" class="nav-link <?php echo isActiveLink('transactions', $page) ? 'active' : ''; ?>">Transactions</a></li>
     <li><a href="#" data-link="customers" class="nav-link <?php echo isActiveLink('customers', $page) ? 'active' : ''; ?>" id="sidebar-customers">Customers</a></li>
+    
   </ul>
 </div>

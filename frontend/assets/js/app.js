@@ -92,7 +92,6 @@ document.addEventListener("click", (e) => {
 
     }
     setActiveLink(currentPage);
-    console.log("first")
     let page = e.target.getAttribute("data-link");
     let params = {};
 
@@ -116,45 +115,6 @@ document.addEventListener("click", (e) => {
     }
   }
 });
-
-// Handle login form submission
-document.addEventListener("submit", (e) => {
-  if (e.target.matches("#login-form")) {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-
-    fetch('modules/login_action.php', {
-      method: 'POST',
-      body: formData
-    })
-      .then(response => response.text())
-      .then(data => {
-        try {
-          const result = JSON.parse(data);
-          if (result.success) {
-            window.location.href = 'index.php';
-          } else {
-            const errorDiv = document.getElementById('login-error');
-            if (errorDiv) {
-              errorDiv.textContent = result.message || 'Login failed. Please try again.';
-              errorDiv.style.display = 'block';
-            }
-          }
-        } catch (e) {
-          console.error('Error parsing response:', e);
-        }
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        const errorDiv = document.getElementById('login-error');
-        if (errorDiv) {
-          errorDiv.textContent = 'An error occurred. Please try again.';
-          errorDiv.style.display = 'block';
-        }
-      });
-  }
-});
-
 
 // Initialize on page load
 window.addEventListener('DOMContentLoaded', async () => {
